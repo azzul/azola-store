@@ -21,7 +21,7 @@
     <input id="lPass" type="password" autocomplete="current-password" required>
     <label for="lDevice">Nama perangkat</label>
     <input id="lDevice" type="text" placeholder="Kasir depan" required maxlength="80">
-    <button class="btn btn--block" id="lBtn">Masuk</button>
+    <button class="btn btn--block" id="lBtn">Masuk (Enter)</button>
   </form>
 </section>
 
@@ -30,43 +30,61 @@
     <strong class="bar__name" id="storeName">Azola Pos</strong>
     <span class="status" id="status"><i></i><span id="statusText">Menghubungkan</span></span>
     <span class="bar__space"></span>
-    <button class="btn btn--ghost btn--sm" id="btnQueue" type="button">Antrean <b id="queueN">0</b></button>
-    <button class="btn btn--ghost btn--sm" id="btnHistory" type="button">Riwayat</button>
+    <span class="bar__who" id="who"></span>
+    <span class="bar__clock" id="clock"></span>
+    <button class="btn btn--ghost btn--sm" id="btnQueue" type="button" title="Antrean kirim">Antrean <b id="queueN">0</b></button>
     <button class="btn btn--ghost btn--sm" id="btnSettings" type="button">Pengaturan</button>
   </header>
 
   <main class="main">
-    <section class="catalog" aria-label="Produk">
-      <div class="search">
-        <label class="sr" for="q">Cari produk atau scan barcode</label>
-        <input id="q" type="search" placeholder="Scan barcode atau cari nama / kode (F2)" autocomplete="off">
+    <section class="work" aria-label="Transaksi">
+      <div class="scan">
+        <label class="sr" for="scan">Scan barcode atau ketik kode / nama barang</label>
+        <input id="scan" type="text" placeholder="Scan barcode, atau ketik kode / nama. Contoh: 3*kopi" autocomplete="off" spellcheck="false" aria-controls="sugg" aria-autocomplete="list">
+        <ul id="sugg" class="sugg" role="listbox" hidden></ul>
       </div>
-      <div class="chips" id="chips" role="group" aria-label="Kategori"></div>
-      <div class="grid" id="grid"></div>
-      <p class="muted empty" id="empty" hidden>Produk tidak ditemukan.</p>
+      <div class="tablewrap" id="tableWrap">
+        <table class="cart" id="cartTable">
+          <thead><tr><th class="c-no">#</th><th class="c-sku">Kode</th><th>Barang</th><th class="c-qty num">Qty</th><th class="c-price num">Harga</th><th class="c-disc num">Diskon</th><th class="c-sub num">Jumlah</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+        <div class="hint" id="cartEmpty">
+          <p><strong>Siap melayani.</strong> Scan barang atau ketik kodenya lalu Enter.</p>
+          <ul>
+            <li><kbd>3*kode</kbd> tambah 3 sekaligus</li>
+            <li><kbd>Enter</kbd> di kolom kosong untuk bayar</li>
+            <li><kbd>&uarr;</kbd><kbd>&darr;</kbd> pilih baris, <kbd>+</kbd><kbd>&minus;</kbd> ubah jumlah, <kbd>Del</kbd> hapus</li>
+            <li><kbd>F1</kbd> semua pintasan</li>
+          </ul>
+        </div>
+      </div>
     </section>
 
-    <aside class="cart" id="cart" aria-label="Keranjang">
-      <div class="cart__head">
-        <h2>Keranjang</h2>
-        <button class="link" id="btnClear" type="button">Kosongkan</button>
-        <button class="cart__close" id="btnCartClose" type="button" aria-label="Tutup keranjang">Tutup</button>
-      </div>
-      <ul class="lines" id="lines"></ul>
-      <p class="muted cart__empty" id="cartEmpty">Belum ada barang. Scan atau pilih produk.</p>
-      <div class="sum">
-        <div><span>Subtotal</span><b id="sSub">Rp0</b></div>
-        <div><label for="disc">Diskon (Rp)</label><input id="disc" type="number" min="0" step="1" value="0" inputmode="numeric"></div>
-        <div id="taxRow" hidden><span>Pajak <span id="taxPct"></span></span><b id="sTax">Rp0</b></div>
-        <div class="sum__total"><span>Total</span><b id="sTotal">Rp0</b></div>
-      </div>
-      <button class="btn btn--block btn--lg" id="btnPay" type="button" disabled>Bayar (F9)</button>
+    <aside class="side" aria-label="Ringkasan">
+      <div class="total"><span>Total</span><b id="sTotal">Rp0</b></div>
+      <dl class="mini">
+        <div><dt>Barang</dt><dd id="sCount">0</dd></div>
+        <div><dt>Subtotal</dt><dd id="sSub">Rp0</dd></div>
+        <div id="rowLD"><dt>Diskon baris</dt><dd id="sLD">Rp0</dd></div>
+        <div id="rowOD"><dt>Diskon transaksi</dt><dd id="sOD">Rp0</dd></div>
+        <div id="taxRow"><dt>Pajak <span id="taxPct"></span></dt><dd id="sTax">Rp0</dd></div>
+      </dl>
+      <div class="sel" id="selInfo" aria-live="polite"></div>
+      <button class="btn btn--pay" id="btnPay" type="button" disabled>Bayar <kbd>F9</kbd></button>
     </aside>
   </main>
 
-  <button class="cartbar" id="cartBar" type="button">
-    <span><b id="cbCount">0</b> barang</span><span>Lihat keranjang</span><b id="cbTotal">Rp0</b>
-  </button>
+  <nav class="keys" aria-label="Pintasan">
+    <button type="button" data-key="F1"><kbd>F1</kbd>Bantuan</button>
+    <button type="button" data-key="F2"><kbd>F2</kbd>Cari</button>
+    <button type="button" data-key="F3"><kbd>F3</kbd>Diskon</button>
+    <button type="button" data-key="F4"><kbd>F4</kbd>Qty</button>
+    <button type="button" data-key="F5"><kbd>F5</kbd>Diskon baris</button>
+    <button type="button" data-key="F6"><kbd>F6</kbd>Tahan <span id="holdN" class="pill" hidden>0</span></button>
+    <button type="button" data-key="F7"><kbd>F7</kbd>Panggil</button>
+    <button type="button" data-key="F8"><kbd>F8</kbd>Struk terakhir</button>
+    <button type="button" data-key="F10"><kbd>F10</kbd>Riwayat</button>
+  </nav>
 </div>
 
 <dialog id="dPay">
@@ -74,44 +92,48 @@
     <h2>Pembayaran</h2>
     <div class="dlg__total"><span>Total</span><b id="pTotal">Rp0</b></div>
     <fieldset class="methods" id="pMethods"></fieldset>
-    <label for="pPaid">Uang diterima (Rp)</label>
-    <input id="pPaid" type="number" min="0" step="1" inputmode="numeric">
+    <label for="pPaid">Uang diterima</label>
+    <input id="pPaid" type="text" inputmode="numeric" autocomplete="off">
     <div class="quick" id="pQuick"></div>
     <div class="dlg__line" id="pChange"></div>
     <label for="pName">Nama pelanggan (opsional)</label>
-    <input id="pName" type="text" maxlength="120">
+    <input id="pName" type="text" maxlength="120" autocomplete="off">
     <div class="dlg__actions">
-      <button class="btn btn--ghost" value="cancel" type="button" data-close>Batal</button>
-      <button class="btn" id="pOk" type="submit">Simpan transaksi</button>
+      <span class="muted keyhint"><kbd>Esc</kbd> batal</span>
+      <button class="btn" id="pOk" type="submit">Simpan transaksi <kbd>Enter</kbd></button>
     </div>
   </form>
 </dialog>
 
 <dialog id="dReceipt">
   <div class="dlg">
-    <h2 id="rTitle">Transaksi tersimpan</h2>
+    <div class="done" id="rDone"></div>
     <pre class="receipt" id="rText"></pre>
     <div class="dlg__actions">
-      <button class="btn btn--ghost" type="button" data-close>Tutup</button>
-      <button class="btn" id="rPrint" type="button">Cetak struk</button>
+      <button class="btn btn--ghost" id="rPrint" type="button"><kbd>P</kbd> Cetak struk</button>
+      <button class="btn" id="rNew" type="button" data-close autofocus>Transaksi baru <kbd>Enter</kbd></button>
     </div>
   </div>
 </dialog>
 
-<dialog id="dQueue">
-  <div class="dlg">
-    <h2>Antrean kirim</h2>
-    <p class="muted">Transaksi yang belum sampai ke server. Stok dihitung dengan memperhitungkan antrean ini.</p>
-    <ul class="list" id="qList"></ul>
-    <div class="dlg__actions"><button class="btn btn--ghost" type="button" data-close>Tutup</button><button class="btn" id="qRetry" type="button">Kirim sekarang</button></div>
-  </div>
+<dialog id="dAsk">
+  <form method="dialog" id="askForm" class="dlg">
+    <h2 id="aTitle"></h2>
+    <p class="muted" id="aMsg"></p>
+    <input id="aInput" type="text" autocomplete="off">
+    <div class="dlg__actions">
+      <span class="muted keyhint"><kbd>Esc</kbd> batal</span>
+      <button class="btn" id="aOk" type="submit">OK</button>
+    </div>
+  </form>
 </dialog>
 
-<dialog id="dHistory">
+<dialog id="dList">
   <div class="dlg">
-    <h2>Riwayat terakhir</h2>
-    <ul class="list" id="hList"></ul>
-    <div class="dlg__actions"><button class="btn btn--ghost" type="button" data-close>Tutup</button></div>
+    <h2 id="lTitle"></h2>
+    <p class="muted" id="lSub"></p>
+    <ul class="list" id="lItems" role="listbox"></ul>
+    <div class="dlg__actions"><span class="muted keyhint" id="lHint"></span><button class="btn btn--ghost" type="button" data-close>Tutup <kbd>Esc</kbd></button></div>
   </div>
 </dialog>
 
@@ -125,6 +147,7 @@
     <select id="sCols"><option value="32">58 mm (32 karakter)</option><option value="42">80 mm (42 karakter)</option><option value="48">80 mm rapat (48 karakter)</option></select>
     <label class="check"><input type="checkbox" id="sDrawer"> Buka laci kasir saat cetak</label>
     <label class="check"><input type="checkbox" id="sAuto"> Cetak otomatis setelah bayar</label>
+    <label class="check"><input type="checkbox" id="sSound"> Bunyi bip saat scan</label>
     <p class="muted" id="sUser"></p>
     <div class="dlg__actions">
       <button class="btn btn--ghost btn--danger-text" type="button" id="sLogout">Keluar akun</button>
@@ -132,6 +155,49 @@
       <button class="btn" type="submit">Simpan</button>
     </div>
   </form>
+</dialog>
+
+<dialog id="dHelp">
+  <div class="dlg dlg--wide">
+    <h2>Pintasan keyboard</h2>
+    <div class="help">
+      <div>
+        <h3>Transaksi</h3>
+        <dl>
+          <dt><kbd>Enter</kbd></dt><dd>Tambah barang. Di kolom kosong: bayar</dd>
+          <dt><kbd>3*kode</kbd></dt><dd>Tambah 3 sekaligus (boleh desimal: <kbd>0,5*gula</kbd>)</dd>
+          <dt><kbd>&uarr;</kbd> <kbd>&darr;</kbd></dt><dd>Pilih baris (saat kolom kosong) atau pilih hasil cari</dd>
+          <dt><kbd>+</kbd> <kbd>&minus;</kbd></dt><dd>Tambah / kurangi jumlah baris terpilih</dd>
+          <dt><kbd>Del</kbd></dt><dd>Hapus baris terpilih</dd>
+          <dt><kbd>Ctrl</kbd>+<kbd>Del</kbd></dt><dd>Kosongkan transaksi</dd>
+          <dt><kbd>Esc</kbd></dt><dd>Hapus isian / tutup jendela</dd>
+        </dl>
+      </div>
+      <div>
+        <h3>Tombol fungsi</h3>
+        <dl>
+          <dt><kbd>F2</kbd></dt><dd>Kembali ke kolom scan</dd>
+          <dt><kbd>F3</kbd></dt><dd>Diskon seluruh transaksi (Rp atau %)</dd>
+          <dt><kbd>F4</kbd></dt><dd>Ubah jumlah baris terpilih</dd>
+          <dt><kbd>F5</kbd></dt><dd>Diskon baris terpilih (Rp atau %)</dd>
+          <dt><kbd>F6</kbd></dt><dd>Tahan transaksi, layani pelanggan lain</dd>
+          <dt><kbd>F7</kbd></dt><dd>Panggil transaksi yang ditahan</dd>
+          <dt><kbd>F8</kbd></dt><dd>Struk transaksi terakhir</dd>
+          <dt><kbd>F9</kbd></dt><dd>Bayar</dd>
+          <dt><kbd>F10</kbd></dt><dd>Riwayat dan cetak ulang</dd>
+        </dl>
+        <h3>Saat bayar</h3>
+        <dl>
+          <dt><kbd>F1</kbd>&ndash;<kbd>F4</kbd></dt><dd>Tunai, Transfer, QRIS, Debit</dd>
+          <dt><kbd>F5</kbd></dt><dd>Uang pas</dd>
+          <dt><kbd>F6</kbd>&ndash;<kbd>F8</kbd></dt><dd>Nominal cepat</dd>
+          <dt><kbd>Enter</kbd></dt><dd>Simpan transaksi</dd>
+          <dt>Ketik</dt><dd><kbd>100k</kbd> atau <kbd>100rb</kbd> = 100.000</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="dlg__actions"><button class="btn" type="button" data-close autofocus>Mengerti <kbd>Esc</kbd></button></div>
+  </div>
 </dialog>
 
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>

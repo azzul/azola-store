@@ -51,6 +51,8 @@ namespace AzolaPos
                 core.Settings.AreDefaultContextMenusEnabled = dev;
                 core.Settings.IsStatusBarEnabled = false;
                 core.Settings.IsZoomControlEnabled = false;
+                // F5 (refresh), F3 (cari), Ctrl+P dsb. dipakai/dimatikan supaya tombol fungsi kasir tidak bentrok.
+                core.Settings.AreBrowserAcceleratorKeysEnabled = dev;
 
                 string ui = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ui");
                 if (!File.Exists(Path.Combine(ui, "index.html")))

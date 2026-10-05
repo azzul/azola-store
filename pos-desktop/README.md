@@ -4,18 +4,46 @@ Kasir desktop ringan untuk Azola Store. Tampilan kasir adalah web (`ui/`), dibun
 
 ## Isi
 
-- `ui/` : tampilan kasir (HTML, CSS, JS tanpa library). Responsif: dua kolom di layar lebar, keranjang menjadi panel di layar sempit.
+- `ui/` : tampilan kasir (HTML, CSS, JS tanpa library). Mengutamakan keyboard (kasir hampir tidak perlu mouse), tetap responsif: dua kolom di layar lebar, satu kolom di layar sempit.
 - `app/` : cangkang Windows (.NET Framework 4.8 + WebView2). Tugasnya hanya menampilkan `ui/`, mencetak struk ESC/POS langsung ke printer, dan membuka laci kasir.
 
 ## Fitur
 
 - Login dengan akun dari dashboard toko. Perangkat tercatat sebagai Pos Desktop.
-- Scan barcode (scanner = keyboard) atau cari nama/kode, filter kategori, F2 fokus cari, F9 bayar.
+- Kolom scan selalu aktif. Ketik di mana saja langsung masuk ke kolom scan, sehingga scanner barcode (yang mengetik seperti keyboard) selalu bekerja.
+- Tabel keranjang padat, bisa dinavigasi dengan panah. Enter pada kolom kosong membuka pembayaran.
+- Tahan dan panggil transaksi (beberapa pelanggan bergantian), diskon per baris atau per transaksi (Rp atau %).
 - Tunai, transfer, QRIS, debit. Uang pas dan tombol cepat, hitung kembalian. Bayar kurang dicatat sebagai piutang.
 - Struk 58/80 mm, cetak ulang dari Riwayat.
 - **Offline**: produk disimpan di perangkat. Transaksi masuk antrean dengan `uuid`, dikirim otomatis saat internet kembali. Server menolak uuid ganda, jadi aman dikirim ulang.
 - Stok mengikuti server tiap 4 detik, dikurangi barang di antrean yang belum terkirim. Penjualan dari web atau Android ikut terlihat.
 - Transaksi yang ditolak server (misal stok kurang karena terjual di tempat lain) tetap di Antrean dengan alasannya, tidak hilang diam-diam.
+
+## Pintasan keyboard
+
+| Tombol | Fungsi |
+|---|---|
+| ketik kode + Enter | tambah 1. Contoh `SMB-001` |
+| `3*kode` atau `3xkode` | tambah 3 (desimal boleh: `0,5*kode`) |
+| ketik nama + panah + Enter | pilih dari saran |
+| Enter (kolom kosong) | bayar |
+| panah atas/bawah, PgUp/PgDn | pilih baris |
+| `+` / `-` | ubah jumlah baris terpilih |
+| Del / Ctrl+Del | hapus baris / kosongkan transaksi |
+| F1 | bantuan |
+| F2 | fokus ke kolom scan |
+| F3 | diskon transaksi (`5000`, `5k`, `10%`) |
+| F4 | ubah jumlah (0 = hapus) |
+| F5 | diskon baris |
+| F6 / F7 | tahan / panggil transaksi |
+| F8 / F10 | struk terakhir / riwayat |
+| F9 | bayar |
+| Di jendela bayar: F1-F4 | Tunai, Transfer, QRIS, Debit |
+| Di jendela bayar: F5-F8 | uang pas dan nominal cepat |
+| Di jendela bayar: Enter / Esc | simpan / batal |
+| Di struk: P / Enter | cetak / selesai |
+
+Nominal bisa ditulis `100k` atau `100rb`.
 
 ## Mencoba tampilan tanpa Windows
 

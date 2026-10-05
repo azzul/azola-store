@@ -3,23 +3,26 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
     /**
-     * Seed the application's database.
+     * Akun admin awal diambil dari .env (SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD).
+     * Ganti password-nya sebelum dipakai di server.
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $this->call(AccountSeeder::class);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        $admin = User::firstOrNew(['email' => env('SEED_ADMIN_EMAIL', 'admin@azola.test')]);
+        if (! $admin->exists) {
+            $admin->name = 'Admin';
+            $admin->password = env('SEED_ADMIN_PASSWORD') ?: \Illuminate\Support\Str::random(20);
+        }
+        $admin->role = User::ROLE_ADMIN;
+        $admin->save();
+
+        $this->call(DemoStoreSeeder::class);
     }
 }

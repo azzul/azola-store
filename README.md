@@ -1,58 +1,62 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Azola Store
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Template toko online Laravel yang satu database dan satu API dengan **Azola Pos** (desktop dan Android).
+Stok, penjualan, dan jurnal selalu sama di web, desktop, dan Android.
 
-## About Laravel
+## Isi
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **Toko online** (publik): beranda, katalog, cari, halaman produk, keranjang, checkout, status pesanan. SEO lengkap (title/meta/canonical, JSON-LD Product/Store/FAQ/Breadcrumb, sitemap.xml, robots.txt). Stok di halaman ikut berubah otomatis.
+- **Dashboard admin** (`/admin`): ringkasan penjualan, stok realtime, pesanan (catat bayar, selesai, batal), produk (foto, stok masuk, penyesuaian, opname), kategori, jurnal, laporan, rekonsiliasi, token perangkat POS.
+- **API Azola Pos** (`/api/v1`): login perangkat, sinkron produk/stok, kirim penjualan (aman diulang), laporan admin.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Jalankan (di rumah atau di kantor)
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+git pull
+php artisan migrate --seed     # buat tabel + data contoh + akun admin
+php artisan storage:link       # sekali saja, supaya foto produk tampil
+php artisan serve
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Buka http://127.0.0.1:8000 untuk toko dan http://127.0.0.1:8000/admin untuk admin.
+Email admin ada di `.env` (`SEED_ADMIN_EMAIL`), password di `SEED_ADMIN_PASSWORD`. Ganti keduanya sebelum dipakai di server.
 
-## Contributing
+Bawaan memakai SQLite (`database/database.sqlite`). Untuk MySQL XAMPP, ubah `DB_*` di `.env`, buat database kosong, lalu jalankan `php artisan migrate --seed` lagi.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Tes: `php artisan test`
 
-## Code of Conduct
+## Atur untuk klien baru
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Semua lewat `.env` dan `config/store.php`: nama toko (`APP_NAME`), WhatsApp, alamat, rekening, warna (`STORE_BRAND_COLOR`, `STORE_ACCENT_COLOR`), pajak, ongkir, metode bayar, FAQ. Hapus data contoh (`DemoStoreSeeder`) sebelum dipakai klien.
 
-## Security Vulnerabilities
+## Menghubungkan Azola Pos
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+1. Admin, menu **Perangkat POS**, buat token (pilih Desktop atau Android). Token tampil sekali.
+2. Perangkat memanggil API dengan header `Authorization: Bearer azp_...` (atau login lewat `POST /api/v1/login` dengan email, password, `device_name`, `device_type`).
 
-## License
+| Fungsi | Endpoint |
+|---|---|
+| Kategori, produk (`updated_since`) | `GET /api/v1/categories`, `GET /api/v1/products` |
+| Stok berubah sejak kursor | `GET /api/v1/sync/stock?since=ID` |
+| Kirim penjualan | `POST /api/v1/orders` (wajib `uuid` dari perangkat) |
+| Bayar / batal | `POST /api/v1/orders/{uuid}/pay`, `.../cancel` (batal khusus admin) |
+| Stok masuk, penyesuaian, opname | `POST /api/v1/stock/receive`, `/adjust`, `/opname` (admin) |
+| Akun, jurnal, rekonsiliasi | `GET /api/v1/accounts`, `/journals`, `/reconciliation` (admin) |
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Aturan penting:
+- `uuid` dibuat perangkat saat transaksi. Kirim ulang uuid yang sama tidak membuat pesanan kedua, jadi aman saat koneksi putus.
+- Harga dan HPP dihitung server. Stok tidak boleh minus: kalau kurang, seluruh transaksi ditolak.
+- Uang = rupiah bulat. Jumlah barang boleh desimal (3 digit), dikirim sebagai teks.
+- Poll stok tiap beberapa detik dengan `since` terakhir. Perubahan terlihat di semua perangkat.
+
+## Cara data dijaga akurat
+
+- Stok hanya berubah lewat `StockService` (dikunci per produk, riwayat mutasi tidak bisa diubah).
+- Jurnal dibuat dalam transaksi yang sama dengan penjualan/stok, selalu seimbang, tidak bisa diubah/dihapus. Koreksi = jurnal balik (batal pesanan).
+- Halaman **Rekonsiliasi** memeriksa: stok vs mutasi, jurnal seimbang, akun persediaan vs nilai stok, akun penjualan vs pesanan, piutang vs tagihan, pesanan punya jurnal, hitungan pesanan.
+
+## Catatan teknis
+
+- Realtime memakai polling berkursor (ringan, jalan di hosting biasa). Jalur ke WebSocket (Laravel Reverb) sudah disiapkan lewat event `StockChanged`.
+- Token perangkat memakai tabel `api_tokens` (hash SHA-256), bukan Sanctum.
+- Laravel Boost opsional: `composer require laravel/boost --dev` lalu `php artisan boost:install`.

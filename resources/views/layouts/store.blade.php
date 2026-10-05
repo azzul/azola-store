@@ -40,15 +40,20 @@
 <header class="top">
     <div class="wrap top__row">
         <a class="brand" href="{{ route('home') }}">{{ $store }}</a>
+        @php $menu = [[route('shop.index'), 'Produk'], [route('about'), 'Tentang kami'], [route('reviews'), 'Ulasan'], [route('clients'), 'Klien'], [route('contact'), 'Kontak']]; @endphp
         <nav class="top__nav" aria-label="Menu utama">
-            <a href="{{ route('shop.index') }}">Produk</a>
-            <a href="{{ route('home') }}#cara-belanja">Cara belanja</a>
-            <a href="{{ route('home') }}#faq">Pertanyaan umum</a>
+            @foreach ($menu as [$href, $label])<a href="{{ $href }}" @if (url()->current() === $href) aria-current="page" @endif>{{ $label }}</a>@endforeach
         </nav>
         <a class="cartlink" href="{{ route('cart.index') }}">
             Keranjang
             @if ($cartCount > 0)<span class="cartlink__n" aria-label="{{ $cartCount }} jenis barang">{{ $cartCount }}</span>@endif
         </a>
+        <details class="menu">
+            <summary aria-label="Buka menu"><span aria-hidden="true">Menu</span></summary>
+            <nav class="menu__panel" aria-label="Menu seluler">
+                @foreach ($menu as [$href, $label])<a href="{{ $href }}">{{ $label }}</a>@endforeach
+            </nav>
+        </details>
     </div>
 </header>
 
@@ -73,9 +78,13 @@
             @if (config('store.email'))<p><a href="mailto:{{ config('store.email') }}">{{ config('store.email') }}</a></p>@endif
         </div>
         <div>
-            <p class="foot__h">Pembayaran</p>
-            <p>Transfer bank, QRIS, atau bayar di tempat.</p>
-            <p><a href="{{ route('shop.index') }}">Lihat semua produk</a></p>
+            <p class="foot__h">Informasi</p>
+            <p><a href="{{ route('shop.index') }}">Semua produk</a></p>
+            <p><a href="{{ route('about') }}">Tentang kami</a></p>
+            <p><a href="{{ route('faq') }}">Pertanyaan umum</a></p>
+            <p><a href="{{ route('returns') }}">Pengembalian dan pembatalan</a></p>
+            <p><a href="{{ route('terms') }}">Syarat dan ketentuan</a></p>
+            <p><a href="{{ route('privacy') }}">Kebijakan privasi</a></p>
         </div>
     </div>
     <div class="wrap foot__copy">&copy; {{ now()->year }} {{ $store }}</div>

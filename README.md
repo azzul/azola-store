@@ -6,7 +6,8 @@ Stok, penjualan, dan jurnal selalu sama di web, desktop, dan Android.
 ## Isi
 
 - **Toko online** (publik): beranda, katalog, cari, halaman produk, keranjang, checkout, status pesanan. SEO lengkap (title/meta/canonical, JSON-LD Product/Store/FAQ/Breadcrumb, sitemap.xml, robots.txt). Stok di halaman ikut berubah otomatis.
-- **Dashboard admin** (`/admin`): ringkasan penjualan, stok realtime, pesanan (catat bayar, selesai, batal), produk (foto, stok masuk, penyesuaian, opname), kategori, jurnal, laporan, rekonsiliasi, token perangkat POS.
+- **Halaman profil**: Tentang kami (`/tentang-kami`), Kontak (`/kontak`, formulir masuk ke admin), Ulasan (`/ulasan`), Klien (`/klien`), Pertanyaan umum, Kebijakan privasi, Syarat, Pengembalian. Semua masuk sitemap dan punya data terstruktur.
+- **Dashboard admin** (`/admin`): ringkasan penjualan, stok realtime, pesanan (catat bayar, selesai, batal), produk (foto, stok masuk, penyesuaian, opname), kategori, jurnal, laporan, rekonsiliasi, token perangkat POS, pesan masuk, moderasi ulasan, daftar klien.
 - **API Azola Pos** (`/api/v1`): login perangkat, sinkron produk/stok, kirim penjualan (aman diulang), laporan admin.
 
 ## Jalankan (di rumah atau di kantor)
@@ -28,6 +29,14 @@ Tes: `php artisan test`
 ## Atur untuk klien baru
 
 Semua lewat `.env` dan `config/store.php`: nama toko (`APP_NAME`), WhatsApp, alamat, rekening, warna (`STORE_BRAND_COLOR`, `STORE_ACCENT_COLOR`), pajak, ongkir, metode bayar, FAQ. Hapus data contoh (`DemoStoreSeeder`) sebelum dipakai klien.
+
+## Isi halaman profil
+
+- **Cerita, nilai, jam buka, sosmed, FAQ**: edit `config/store.php` dan `.env` (`STORE_SINCE`, `STORE_INSTAGRAM`, `STORE_TIKTOK`, `STORE_FACEBOOK`, `STORE_MAP_URL`).
+- **Ulasan**: pembeli menulis di `/ulasan`, masuk antrean, tampil setelah disetujui di admin (menu Ulasan). Tidak ada ulasan contoh. Admin hanya boleh mencatat ulasan yang benar-benar diterima.
+- **Klien**: tambah dari admin (menu Klien, logo opsional). Tampilkan hanya klien yang setuju namanya dipasang.
+- **Kebijakan privasi, syarat, pengembalian**: teks template umum di `resources/views/store/pages/`. Pemilik toko perlu memeriksa dan menyesuaikannya.
+- Halaman Ulasan dan Klien otomatis `noindex` selama masih kosong.
 
 ## Menghubungkan Azola Pos
 

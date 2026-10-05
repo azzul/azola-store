@@ -47,6 +47,32 @@ return [
     // Barang dengan stok <= ambang ini tampil sebagai "Sisa X" di toko.
     'public_low_stock' => 5,
 
+    'instagram' => env('STORE_INSTAGRAM', ''),   // username tanpa @
+    'facebook' => env('STORE_FACEBOOK', ''),     // URL halaman
+    'tiktok' => env('STORE_TIKTOK', ''),         // username tanpa @
+    'map_url' => env('STORE_MAP_URL', ''),       // tautan Google Maps lokasi toko
+
+    // Jam buka: [hari, jam]. Tampil di halaman Kontak.
+    'hours' => [
+        ['Senin - Sabtu', '08.00 - 17.00'],
+        ['Minggu', 'Tutup'],
+    ],
+
+    // Isi halaman Tentang Kami. Ganti dengan cerita toko klien.
+    'about' => [
+        'since' => env('STORE_SINCE', ''), // tahun berdiri, mis. 2015. Kosong = disembunyikan
+        'headline' => 'Toko lokal dengan stok yang bisa dipercaya.',
+        'story' => [
+            'Kami toko yang melayani kebutuhan sehari-hari pelanggan di sekitar kami. Website ini dibuat supaya belanja bisa dilakukan dari rumah tanpa takut barangnya ternyata habis.',
+            'Semua penjualan di toko, di kasir, dan di website tercatat di satu sistem. Karena itu stok yang kamu lihat di sini sama dengan stok di rak.',
+        ],
+        'values' => [
+            ['Stok jujur', 'Yang tampil tersedia memang ada. Kalau habis, labelnya langsung berubah.'],
+            ['Harga sama', 'Harga di website sama dengan harga di toko, tanpa selisih diam-diam.'],
+            ['Dilayani orang', 'Ada pertanyaan atau kendala pesanan, kamu bicara dengan tim toko, bukan mesin.'],
+        ],
+    ],
+
     'faq' => [
         ['q' => 'Apakah stok di web sama dengan di toko?', 'a' => 'Ya. Web, kasir di toko, dan aplikasi Android memakai satu database stok. Begitu barang terjual di kasir, stok di web ikut berkurang.'],
         ['q' => 'Bagaimana cara membayar?', 'a' => 'Pilih transfer bank, QRIS, atau bayar di tempat saat checkout. Pesanan transfer diproses setelah pembayaran kami konfirmasi.'],

@@ -2,6 +2,9 @@
 
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\ClientController;
+use App\Http\Controllers\Admin\MessageController;
+use App\Http\Controllers\Admin\ReviewController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DeviceController;
 use App\Http\Controllers\Admin\FinanceController;
@@ -48,6 +51,20 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('jurnal/{journal}', [FinanceController::class, 'journal'])->name('journals.show');
         Route::get('laporan', [FinanceController::class, 'report'])->name('report');
         Route::get('rekonsiliasi', [FinanceController::class, 'reconcile'])->name('reconcile');
+
+        Route::get('ulasan', [ReviewController::class, 'index'])->name('reviews.index');
+        Route::post('ulasan', [ReviewController::class, 'store'])->name('reviews.store');
+        Route::post('ulasan/{review}/tampil', [ReviewController::class, 'toggle'])->name('reviews.toggle');
+        Route::delete('ulasan/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
+
+        Route::get('klien', [ClientController::class, 'index'])->name('clients.index');
+        Route::post('klien', [ClientController::class, 'store'])->name('clients.store');
+        Route::post('klien/{client}/tampil', [ClientController::class, 'toggle'])->name('clients.toggle');
+        Route::delete('klien/{client}', [ClientController::class, 'destroy'])->name('clients.destroy');
+
+        Route::get('pesan', [MessageController::class, 'index'])->name('messages.index');
+        Route::get('pesan/{message}', [MessageController::class, 'show'])->name('messages.show');
+        Route::delete('pesan/{message}', [MessageController::class, 'destroy'])->name('messages.destroy');
 
         Route::get('perangkat', [DeviceController::class, 'index'])->name('devices.index');
         Route::post('perangkat', [DeviceController::class, 'store'])->name('devices.store');

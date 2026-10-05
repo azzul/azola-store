@@ -2,6 +2,8 @@
     $hex = fn ($v, $f) => preg_match('/^#[0-9a-fA-F]{3,8}$/', (string) $v) ? $v : $f;
     $brand = $hex(config('store.theme.brand'), '#0F5C46');
     $accent = $hex(config('store.theme.accent'), '#FFD43B');
+    $unread = \App\Models\ContactMessage::whereNull('read_at')->count();
+    $pendingReviews = \App\Models\Testimonial::where('is_published', false)->count();
     $nav = [
         ['admin.dashboard', 'Ringkasan', 'admin'],
         ['admin.stock', 'Stok realtime', 'admin/stok*'],
@@ -11,6 +13,9 @@
         ['admin.journals.index', 'Jurnal', 'admin/jurnal*'],
         ['admin.report', 'Laporan', 'admin/laporan*'],
         ['admin.reconcile', 'Rekonsiliasi', 'admin/rekonsiliasi*'],
+        ['admin.messages.index', 'Pesan masuk'.($unread ? " ({$unread})" : ''), 'admin/pesan*'],
+        ['admin.reviews.index', 'Ulasan'.($pendingReviews ? " ({$pendingReviews})" : ''), 'admin/ulasan*'],
+        ['admin.clients.index', 'Klien', 'admin/klien*'],
         ['admin.devices.index', 'Perangkat POS', 'admin/perangkat*'],
     ];
 @endphp

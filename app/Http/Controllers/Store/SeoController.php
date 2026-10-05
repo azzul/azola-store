@@ -16,6 +16,16 @@ class SeoController extends Controller
             ['loc' => route('shop.index'), 'lastmod' => Product::online()->max('updated_at'), 'priority' => '0.9'],
         ];
 
+        foreach (['about', 'contact', 'faq', 'privacy', 'terms', 'returns'] as $page) {
+            $urls[] = ['loc' => route($page), 'lastmod' => null, 'priority' => in_array($page, ['about', 'contact'], true) ? '0.6' : '0.4'];
+        }
+        if (\App\Models\Testimonial::published()->exists()) {
+            $urls[] = ['loc' => route('reviews'), 'lastmod' => \App\Models\Testimonial::published()->max('updated_at'), 'priority' => '0.5'];
+        }
+        if (\App\Models\Client::published()->exists()) {
+            $urls[] = ['loc' => route('clients'), 'lastmod' => \App\Models\Client::published()->max('updated_at'), 'priority' => '0.5'];
+        }
+
         foreach (Category::withMax(['products as last_update' => fn ($q) => $q->online()], 'updated_at')->get() as $category) {
             $urls[] = ['loc' => $category->url(), 'lastmod' => $category->last_update, 'priority' => '0.8'];
         }

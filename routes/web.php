@@ -3,6 +3,8 @@
 use App\Http\Controllers\Store\CartController;
 use App\Http\Controllers\Store\CheckoutController;
 use App\Http\Controllers\Store\HomeController;
+use App\Http\Controllers\Store\PageController;
+use App\Http\Controllers\Store\ReviewController;
 use App\Http\Controllers\Store\SeoController;
 use App\Http\Controllers\Store\ShopController;
 use Illuminate\Support\Facades\Route;
@@ -26,6 +28,17 @@ Route::middleware('stock.cursor')->group(function () {
 
     Route::get('/checkout', [CheckoutController::class, 'show'])->name('checkout.show');
     Route::post('/checkout', [CheckoutController::class, 'store'])->middleware('throttle:10,1')->name('checkout.store');
+    Route::get('/tentang-kami', [PageController::class, 'about'])->name('about');
+    Route::get('/kontak', [PageController::class, 'contact'])->name('contact');
+    Route::post('/kontak', [PageController::class, 'contactSend'])->middleware('throttle:5,10')->name('contact.send');
+    Route::get('/ulasan', [ReviewController::class, 'index'])->name('reviews');
+    Route::post('/ulasan', [ReviewController::class, 'store'])->middleware('throttle:5,60')->name('reviews.store');
+    Route::get('/klien', [PageController::class, 'clients'])->name('clients');
+    Route::get('/pertanyaan-umum', [PageController::class, 'faq'])->name('faq');
+    Route::get('/kebijakan-privasi', [PageController::class, 'privacy'])->name('privacy');
+    Route::get('/syarat-ketentuan', [PageController::class, 'terms'])->name('terms');
+    Route::get('/pengembalian', [PageController::class, 'returns'])->name('returns');
+
     Route::get('/pesanan/{uuid}', [CheckoutController::class, 'order'])->whereUuid('uuid')->name('order.show');
 });
 

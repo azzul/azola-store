@@ -98,6 +98,24 @@
         </div>
     </section>
 
+    @if (($homeReviews ?? collect())->isNotEmpty())
+        <section class="block">
+            <div class="wrap">
+                <div class="block__head"><h2>Kata pelanggan</h2><a href="{{ route('reviews') }}">Baca semua ulasan</a></div>
+                <div class="reviews reviews--row">@foreach ($homeReviews as $review)@include('store.partials.review', ['review' => $review])@endforeach</div>
+            </div>
+        </section>
+    @endif
+
+    @if (($homeClients ?? collect())->isNotEmpty())
+        <section class="block block--tint">
+            <div class="wrap">
+                <div class="block__head"><h2>Dipercaya oleh</h2><a href="{{ route('clients') }}">Lihat semua klien</a></div>
+                <div class="clients">@foreach ($homeClients as $client)@include('store.partials.client', ['client' => $client])@endforeach</div>
+            </div>
+        </section>
+    @endif
+
     <section class="block" id="faq">
         <div class="wrap faq">
             <h2>Pertanyaan umum</h2>

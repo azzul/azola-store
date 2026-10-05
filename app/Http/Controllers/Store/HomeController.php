@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Store;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\Client;
+use App\Models\Testimonial;
 use App\Models\Product;
 use App\Support\Seo;
 
@@ -32,6 +34,8 @@ class HomeController extends Controller
             'featured' => $featured,
             'categories' => $categories,
             'faq' => config('store.faq'),
+            'homeReviews' => Testimonial::published()->where('rating', '>=', 4)->latest('id')->limit(3)->get(),
+            'homeClients' => Client::published()->limit(8)->get(),
         ]);
     }
 }

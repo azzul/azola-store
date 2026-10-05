@@ -38,6 +38,10 @@ Semua lewat `.env` dan `config/store.php`: nama toko (`APP_NAME`), WhatsApp, ala
 - **Kebijakan privasi, syarat, pengembalian**: teks template umum di `resources/views/store/pages/`. Pemilik toko perlu memeriksa dan menyesuaikannya.
 - Halaman Ulasan dan Klien otomatis `noindex` selama masih kosong.
 
+## Kasir desktop
+
+Folder `pos-desktop/` berisi kasir ringan (tampilan web + cangkang C# WebView2, tanpa Electron). Lihat `pos-desktop/README.md`.
+
 ## Menghubungkan Azola Pos
 
 1. Admin, menu **Perangkat POS**, buat token (pilih Desktop atau Android). Token tampil sekali.
@@ -45,10 +49,11 @@ Semua lewat `.env` dan `config/store.php`: nama toko (`APP_NAME`), WhatsApp, ala
 
 | Fungsi | Endpoint |
 |---|---|
+| Pengaturan toko (nama, alamat, pajak) | `GET /api/v1/settings` |
 | Kategori, produk (`updated_since`) | `GET /api/v1/categories`, `GET /api/v1/products` |
 | Stok berubah sejak kursor | `GET /api/v1/sync/stock?since=ID` |
 | Kirim penjualan | `POST /api/v1/orders` (wajib `uuid` dari perangkat) |
-| Bayar / batal | `POST /api/v1/orders/{uuid}/pay`, `.../cancel` (batal khusus admin) |
+| Bayar / batal | `POST /api/v1/orders/{uuid}/payments`, `.../cancel` (batal khusus admin) |
 | Stok masuk, penyesuaian, opname | `POST /api/v1/stock/receive`, `/adjust`, `/opname` (admin) |
 | Akun, jurnal, rekonsiliasi | `GET /api/v1/accounts`, `/journals`, `/reconciliation` (admin) |
 

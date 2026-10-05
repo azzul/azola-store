@@ -161,4 +161,16 @@ class ApiTest extends TestCase
         $this->postJson('/api/v1/auth/logout', [], $headers)->assertOk();
         $this->getJson('/api/v1/me', $headers)->assertUnauthorized();
     }
+
+    public function test_pos_can_read_store_settings(): void
+    {
+        $user = $this->makeUser('cashier');
+        $token = $this->postJson('/api/v1/auth/login', [
+            'email' => $user->email, 'password' => 'password', 'device_name' => 'Kasir 1', 'device_type' => 'desktop',
+        ])->json('token');
+
+        $this->getJson('/api/v1/settings', ['Authorization' => 'Bearer '.$token])
+            ->assertOk()->assertJsonPath('data.name', config('store.name'))->assertJsonStructure(['data' => ['tax_rate', 'payment_methods']]);
+        $this->getJson('/api/v1/settings')->assertUnauthorized();
+    }
 }

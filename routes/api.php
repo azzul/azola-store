@@ -25,6 +25,7 @@ Route::prefix('v1')->group(function () {
 
     Route::middleware(['api.token', 'throttle:600,1'])->group(function () {
         Route::get('me', [AuthController::class, 'me']);
+        Route::get('settings', [AuthController::class, 'settings']);
         Route::post('auth/logout', [AuthController::class, 'logout']);
 
         Route::get('categories', [SyncController::class, 'categories']);

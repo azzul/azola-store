@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Azola Pos</title>
+<link rel="stylesheet" href="pos.css">
+</head>
+<body>
+
+<section id="login" class="login" hidden>
+  <form id="loginForm" class="login__card" autocomplete="on">
+    <h1>Azola Pos</h1>
+    <p class="muted">Masuk dengan akun kasir atau admin dari dashboard toko.</p>
+    <div id="loginError" class="alert" role="alert" hidden></div>
+    <label for="lServer">Alamat server</label>
+    <input id="lServer" type="url" placeholder="https://toko-anda.com" required>
+    <label for="lEmail">Email</label>
+    <input id="lEmail" type="email" autocomplete="username" required>
+    <label for="lPass">Password</label>
+    <input id="lPass" type="password" autocomplete="current-password" required>
+    <label for="lDevice">Nama perangkat</label>
+    <input id="lDevice" type="text" placeholder="Kasir depan" required maxlength="80">
+    <button class="btn btn--block" id="lBtn">Masuk</button>
+  </form>
+</section>
+
+<div id="app" class="app" hidden>
+  <header class="bar">
+    <strong class="bar__name" id="storeName">Azola Pos</strong>
+    <span class="status" id="status"><i></i><span id="statusText">Menghubungkan</span></span>
+    <span class="bar__space"></span>
+    <button class="btn btn--ghost btn--sm" id="btnQueue" type="button">Antrean <b id="queueN">0</b></button>
+    <button class="btn btn--ghost btn--sm" id="btnHistory" type="button">Riwayat</button>
+    <button class="btn btn--ghost btn--sm" id="btnSettings" type="button">Pengaturan</button>
+  </header>
+
+  <main class="main">
+    <section class="catalog" aria-label="Produk">
+      <div class="search">
+        <label class="sr" for="q">Cari produk atau scan barcode</label>
+        <input id="q" type="search" placeholder="Scan barcode atau cari nama / kode (F2)" autocomplete="off">
+      </div>
+      <div class="chips" id="chips" role="group" aria-label="Kategori"></div>
+      <div class="grid" id="grid"></div>
+      <p class="muted empty" id="empty" hidden>Produk tidak ditemukan.</p>
+    </section>
+
+    <aside class="cart" id="cart" aria-label="Keranjang">
+      <div class="cart__head">
+        <h2>Keranjang</h2>
+        <button class="link" id="btnClear" type="button">Kosongkan</button>
+        <button class="cart__close" id="btnCartClose" type="button" aria-label="Tutup keranjang">Tutup</button>
+      </div>
+      <ul class="lines" id="lines"></ul>
+      <p class="muted cart__empty" id="cartEmpty">Belum ada barang. Scan atau pilih produk.</p>
+      <div class="sum">
+        <div><span>Subtotal</span><b id="sSub">Rp0</b></div>
+        <div><label for="disc">Diskon (Rp)</label><input id="disc" type="number" min="0" step="1" value="0" inputmode="numeric"></div>
+        <div id="taxRow" hidden><span>Pajak <span id="taxPct"></span></span><b id="sTax">Rp0</b></div>
+        <div class="sum__total"><span>Total</span><b id="sTotal">Rp0</b></div>
+      </div>
+      <button class="btn btn--block btn--lg" id="btnPay" type="button" disabled>Bayar (F9)</button>
+    </aside>
+  </main>
+
+  <button class="cartbar" id="cartBar" type="button">
+    <span><b id="cbCount">0</b> barang</span><span>Lihat keranjang</span><b id="cbTotal">Rp0</b>
+  </button>
+</div>
+
+<dialog id="dPay">
+  <form method="dialog" id="payForm" class="dlg">
+    <h2>Pembayaran</h2>
+    <div class="dlg__total"><span>Total</span><b id="pTotal">Rp0</b></div>
+    <fieldset class="methods" id="pMethods"></fieldset>
+    <label for="pPaid">Uang diterima (Rp)</label>
+    <input id="pPaid" type="number" min="0" step="1" inputmode="numeric">
+    <div class="quick" id="pQuick"></div>
+    <div class="dlg__line" id="pChange"></div>
+    <label for="pName">Nama pelanggan (opsional)</label>
+    <input id="pName" type="text" maxlength="120">
+    <div class="dlg__actions">
+      <button class="btn btn--ghost" value="cancel" type="button" data-close>Batal</button>
+      <button class="btn" id="pOk" type="submit">Simpan transaksi</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dReceipt">
+  <div class="dlg">
+    <h2 id="rTitle">Transaksi tersimpan</h2>
+    <pre class="receipt" id="rText"></pre>
+    <div class="dlg__actions">
+      <button class="btn btn--ghost" type="button" data-close>Tutup</button>
+      <button class="btn" id="rPrint" type="button">Cetak struk</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="dQueue">
+  <div class="dlg">
+    <h2>Antrean kirim</h2>
+    <p class="muted">Transaksi yang belum sampai ke server. Stok dihitung dengan memperhitungkan antrean ini.</p>
+    <ul class="list" id="qList"></ul>
+    <div class="dlg__actions"><button class="btn btn--ghost" type="button" data-close>Tutup</button><button class="btn" id="qRetry" type="button">Kirim sekarang</button></div>
+  </div>
+</dialog>
+
+<dialog id="dHistory">
+  <div class="dlg">
+    <h2>Riwayat terakhir</h2>
+    <ul class="list" id="hList"></ul>
+    <div class="dlg__actions"><button class="btn btn--ghost" type="button" data-close>Tutup</button></div>
+  </div>
+</dialog>
+
+<dialog id="dSettings">
+  <form method="dialog" class="dlg" id="setForm">
+    <h2>Pengaturan</h2>
+    <label for="sServer">Alamat server</label><input id="sServer" type="url" required>
+    <label for="sFooter">Teks bawah struk</label><input id="sFooter" type="text" maxlength="80">
+    <label for="sPrinter">Nama printer Windows (kosong = printer bawaan)</label><input id="sPrinter" type="text" maxlength="120">
+    <label for="sCols">Lebar kertas</label>
+    <select id="sCols"><option value="32">58 mm (32 karakter)</option><option value="42">80 mm (42 karakter)</option><option value="48">80 mm rapat (48 karakter)</option></select>
+    <label class="check"><input type="checkbox" id="sDrawer"> Buka laci kasir saat cetak</label>
+    <label class="check"><input type="checkbox" id="sAuto"> Cetak otomatis setelah bayar</label>
+    <p class="muted" id="sUser"></p>
+    <div class="dlg__actions">
+      <button class="btn btn--ghost btn--danger-text" type="button" id="sLogout">Keluar akun</button>
+      <button class="btn btn--ghost" type="button" data-close>Batal</button>
+      <button class="btn" type="submit">Simpan</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+<script src="pos.js"></script>
+</body>
+</html>

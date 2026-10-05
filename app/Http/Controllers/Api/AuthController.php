@@ -61,6 +61,19 @@ class AuthController extends Controller
         ]);
     }
 
+    /** Pengaturan toko untuk struk dan hitungan di kasir (nama, alamat, pajak, metode bayar). */
+    public function settings(): JsonResponse
+    {
+        return response()->json(['data' => [
+            'name' => config('store.name'),
+            'address' => config('store.address'),
+            'phone' => config('store.whatsapp'),
+            'tax_rate' => (float) config('store.tax_rate'),
+            'payment_methods' => \App\Services\OrderService::METHODS,
+            'currency' => 'IDR',
+        ]]);
+    }
+
     public function logout(Request $request): JsonResponse
     {
         $request->attributes->get('api_token')->forceFill(['revoked_at' => now()])->save();

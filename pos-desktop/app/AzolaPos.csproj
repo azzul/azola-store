@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    .NET Framework 4.8: sudah terpasang di Windows 10 (1903 ke atas) dan Windows 11,
+    jadi pengguna tidak perlu memasang runtime apa pun. Hasil build hanya beberapa MB.
+    Mesin tampilan = Microsoft Edge WebView2 (juga bawaan Windows 11 / Windows 10 yang Edge-nya terbarui).
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>10.0</LangVersion>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyName>AzolaPos</AssemblyName>
+    <RootNamespace>AzolaPos</RootNamespace>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <Version>0.1.0</Version>
+    <Product>Azola Pos</Product>
+    <Nullable>disable</Nullable>
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2903.40" />
+    <Reference Include="System.Web.Extensions" />
+  </ItemGroup>
+
+  <!-- Salin tampilan kasir (folder ui) ke samping .exe saat build -->
+  <ItemGroup>
+    <Content Include="..\ui\**\*.*" Link="ui\%(RecursiveDir)%(Filename)%(Extension)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>

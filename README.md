@@ -33,6 +33,10 @@ Tes: `php artisan test`
 
 ## Atur untuk klien baru
 
+### Pengaturan toko (di database)
+
+Nama, tagline, alamat, peta, jam buka, WhatsApp, email, sosmed, rekening, ongkir, warna, dan logo bisa diubah di admin: **/admin/pengaturan**. Nilainya disimpan di tabel `settings` dan menimpa `.env`/`config/store.php`; kolom yang dikosongkan kembali memakai nilai `.env`. Data dummy awal diisi oleh `php artisan db:seed --class=DemoSettingSeeder` (aman dijalankan ulang, tidak menimpa hasil edit admin).
+
 Semua lewat `.env` dan `config/store.php`: nama toko (`APP_NAME`), WhatsApp, alamat, rekening, warna (`STORE_BRAND_COLOR`, `STORE_ACCENT_COLOR`), pajak, ongkir, metode bayar, FAQ. Logo: taruh berkas di `public/` lalu isi `STORE_LOGO`; kosong = logo bawaan. Alamat, sosmed, dan email di `.env` sekarang berisi data dummy, ganti sebelum dipakai klien. Hapus data contoh (`DemoStoreSeeder`, `DemoArticleSeeder`) sebelum dipakai klien. Foto contoh dibuat oleh `database/seeders/demo-images/_generate.py` (ilustrasi, ganti dengan foto asli toko).
 
 ## Isi halaman profil

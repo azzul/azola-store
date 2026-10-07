@@ -48,9 +48,11 @@
         $has('pricelist') ? [route('pricelist'), 'Pricelist', 'pricelist*'] : null,
         $has('articles.index') ? [route('articles.index'), 'Artikel', 'artikel*'] : null,
         [route('about'), 'Tentang kami', 'tentang-kami'],
+        [route('clients'), 'Klien', 'klien'],
+        [route('reviews'), 'Ulasan', 'ulasan'],
         [route('contact'), 'Kontak', 'kontak'],
     ]));
-    $more = [[route('reviews'), 'Ulasan'], [route('clients'), 'Klien'], [route('faq'), 'Pertanyaan umum']];
+    $more = [[route('faq'), 'Pertanyaan umum']];
     $socials = array_filter([
         'instagram' => config('store.instagram') ? 'https://instagram.com/'.config('store.instagram') : null,
         'facebook' => config('store.facebook') ?: null,

@@ -575,3 +575,21 @@ nav.chips a { white-space: nowrap; }
   .pltable td[data-label="Stok"] { grid-column: 1 / -1; font-size: .85rem; margin-top: .2rem; }
 }
 @media print { .top, .foot, .wafab, .bnav, .filters, .plhead__dl, .plhead .btn { display: none !important; } }
+
+/* ===== Header: menu di tengah, hamburger di kanan ===== */
+.top__row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 1.2rem; }
+.top__row > .brand { justify-self: start; }
+.top__nav { margin: 0; justify-content: center; gap: 1.5rem; }
+.top__row > .tools { justify-self: end; }
+.top__row > .menu { grid-column: 3; justify-self: end; }
+@media (max-width: 1100px) {
+  /* menu tengah diganti hamburger di kanan; ikon akun tetap tampil sampai bottom nav HP mengambil alih */
+  .top__row { display: flex; gap: .8rem; }
+  .top__nav { display: none; }
+  .top__row > .tools { margin-left: auto; }
+  .menu { display: block; }
+  .menu__panel { right: 0; }
+}
+@media (max-width: 860px) {
+  .top__row > .menu { margin-left: auto; }
+}

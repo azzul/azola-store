@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\DeviceController;
 use App\Http\Controllers\Admin\FinanceController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\SettingController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -91,6 +92,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('pesan', [MessageController::class, 'index'])->name('messages.index');
         Route::get('pesan/{message}', [MessageController::class, 'show'])->name('messages.show');
         Route::delete('pesan/{message}', [MessageController::class, 'destroy'])->name('messages.destroy');
+
+        Route::get('pengaturan', [SettingController::class, 'index'])->name('settings.index');
+        Route::put('pengaturan', [SettingController::class, 'update'])->name('settings.update');
 
         Route::get('perangkat', [DeviceController::class, 'index'])->name('devices.index');
         Route::post('perangkat', [DeviceController::class, 'store'])->name('devices.store');

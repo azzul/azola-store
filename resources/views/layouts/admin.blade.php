@@ -20,6 +20,7 @@
         ['admin.reviews.index', 'Ulasan'.($pendingReviews ? " ({$pendingReviews})" : ''), 'admin/ulasan*'],
         ['admin.clients.index', 'Klien', 'admin/klien*'],
         ['admin.devices.index', 'Perangkat POS', 'admin/perangkat*'],
+        ['admin.settings.index', 'Pengaturan toko', 'admin/pengaturan*'],
     ];
 @endphp
 <!doctype html>

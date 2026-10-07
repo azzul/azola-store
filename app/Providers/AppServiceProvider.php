@@ -19,6 +19,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Pengaturan toko dari database menimpa config/store.php (nilai bawaan dari .env).
+        \App\Support\StoreSettings::apply();
     }
 }

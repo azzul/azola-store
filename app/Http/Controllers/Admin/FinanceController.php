@@ -10,16 +10,34 @@ use Illuminate\Http\Request;
 
 class FinanceController extends Controller
 {
+    /** Jurnal umum: semua jurnal, dengan filter periode, jenis, dan pencarian. */
     public function journals(Request $request)
     {
         $q = trim((string) $request->query('q'));
+        $from = $request->query('from', now()->startOfMonth()->format('Y-m-d'));
+        $to = $request->query('to', today()->format('Y-m-d'));
 
-        $journals = Journal::query()
+        $query = Journal::query()->with('lines.account')
+            ->whereDate('date', '>=', $from)->whereDate('date', '<=', $to)
             ->when($request->filled('type'), fn ($w) => $w->where('type', $request->query('type')))
             ->when($q !== '', fn ($w) => $w->where(fn ($x) => $x->where('number', 'like', "%{$q}%")->orWhere('description', 'like', "%{$q}%")))
-            ->latest('date')->latest('id')->paginate(30)->withQueryString();
+            ->latest('date')->latest('id');
 
-        return view('admin.finance.journals', ['journals' => $journals, 'q' => $q]);
+        if ($request->query('export') === 'csv') {
+            $rows = [];
+            foreach ((clone $query)->get() as $j) {
+                foreach ($j->lines as $l) {
+                    $rows[] = [$j->number, $j->date->format('Y-m-d'), $j->type, $j->description, $l->account->code, $l->account->name, $l->debit, $l->credit];
+                }
+            }
+
+            return \App\Support\Csv::download('jurnal-umum-'.$from.'-'.$to.'.csv', ['Nomor', 'Tanggal', 'Jenis', 'Keterangan', 'Kode akun', 'Akun', 'Debit', 'Kredit'], $rows);
+        }
+
+        return view('admin.finance.journals', [
+            'journals' => $query->paginate(25)->withQueryString(), 'q' => $q, 'from' => $from, 'to' => $to,
+            'types' => Journal::query()->distinct()->orderBy('type')->pluck('type'),
+        ]);
     }
 
     public function journal(Journal $journal)

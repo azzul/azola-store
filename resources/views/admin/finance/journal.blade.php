@@ -1,7 +1,10 @@
 @extends('layouts.admin')
 @section('title', $journal->number)
 @section('heading', 'Jurnal '.$journal->number)
-@section('actions')<a class="btn btn--ghost" href="{{ route('admin.journals.index') }}">Kembali</a>@endsection
+@section('actions')<a class="btn btn--ghost" href="{{ route('admin.journals.index') }}">Kembali</a>@if ($journal->type === 'manual' && ! $journal->isReversed() && ! $journal->reversal_of_id)
+<section class="card no-print"><form method="post" action="{{ route('admin.adjustment-journals.cancel', $journal) }}" onsubmit="return confirm('Balik jurnal manual ini?')">@csrf<button class="btn btn--danger btn--sm">Batalkan jurnal (buat jurnal pembalik)</button></form></section>
+@endif
+@endsection
 @section('content')
 <section class="card">
     <dl class="kv">
@@ -10,6 +13,7 @@
         <dt>Keterangan</dt><dd>{{ $journal->description }}</dd>
         <dt>Dibuat oleh</dt><dd>{{ $journal->user?->name ?? 'Sistem' }}</dd>
         @if ($journal->source instanceof \App\Models\Order)<dt>Sumber</dt><dd><a href="{{ route('admin.orders.show', $journal->source) }}">Pesanan {{ $journal->source->number }}</a></dd>@endif
+        @if ($journal->source && ! ($journal->source instanceof \App\Models\Order))<dt>Sumber</dt><dd>{{ class_basename($journal->source) }} {{ $journal->source->number ?? ($journal->source->code ?? '#'.$journal->source->getKey()) }}</dd>@endif
         @if ($journal->reversal_of_id)<dt>Membalik</dt><dd><a href="{{ route('admin.journals.show', $journal->reversal_of_id) }}">Jurnal #{{ $journal->reversal_of_id }}</a></dd>@endif
         @if ($journal->reversed_by_id)<dt>Dibalik oleh</dt><dd><a href="{{ route('admin.journals.show', $journal->reversed_by_id) }}">Jurnal #{{ $journal->reversed_by_id }}</a></dd>@endif
     </dl>
@@ -25,4 +29,7 @@
         <tfoot><tr><td colspan="2">Total</td><td class="num">{{ \App\Support\Rupiah::format($journal->lines->sum('debit')) }}</td><td class="num">{{ \App\Support\Rupiah::format($journal->lines->sum('credit')) }}</td></tr></tfoot>
     </table>
 </section>
+@if ($journal->type === 'manual' && ! $journal->isReversed() && ! $journal->reversal_of_id)
+<section class="card no-print"><form method="post" action="{{ route('admin.adjustment-journals.cancel', $journal) }}" onsubmit="return confirm('Balik jurnal manual ini?')">@csrf<button class="btn btn--danger btn--sm">Batalkan jurnal (buat jurnal pembalik)</button></form></section>
+@endif
 @endsection

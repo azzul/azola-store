@@ -4,24 +4,94 @@
     $accent = $hex(config('store.theme.accent'), '#FFD43B');
     $unread = \App\Models\ContactMessage::whereNull('read_at')->count();
     $pendingReviews = \App\Models\Testimonial::where('is_published', false)->count();
-    $nav = [
-        ['admin.dashboard', 'Ringkasan', 'admin'],
-        ['admin.stock', 'Stok realtime', 'admin/stok*'],
-        ['admin.orders.index', 'Pesanan', 'admin/pesanan*'],
-        ['admin.catalog.index', 'Katalog toko', 'admin/katalog*'],
-        ['admin.products.index', 'SKU dan stok', 'admin/produk*'],
-        ['admin.etalases.index', 'Etalase', 'admin/etalase*'],
-        ['admin.categories.index', 'Kategori', 'admin/kategori*'],
-        ['admin.articles.index', 'Artikel', 'admin/artikel*'],
-        ['admin.journals.index', 'Jurnal', 'admin/jurnal*'],
-        ['admin.report', 'Laporan', 'admin/laporan*'],
-        ['admin.reconcile', 'Rekonsiliasi', 'admin/rekonsiliasi*'],
-        ['admin.messages.index', 'Pesan masuk'.($unread ? " ({$unread})" : ''), 'admin/pesan*'],
-        ['admin.reviews.index', 'Ulasan'.($pendingReviews ? " ({$pendingReviews})" : ''), 'admin/ulasan*'],
-        ['admin.clients.index', 'Klien', 'admin/klien*'],
-        ['admin.devices.index', 'Perangkat POS', 'admin/perangkat*'],
-        ['admin.settings.index', 'Pengaturan toko', 'admin/pengaturan*'],
+    $count = fn ($stage) => \App\Models\Order::where('channel', 'web')->where('fulfillment', $stage)->count();
+    $openPo = null;
+    // Menu bergrup. Entri: [nama route, label, pola URL untuk penanda aktif, lencana opsional]
+    $groups = [
+        ['Ringkasan', [
+            ['admin.dashboard', 'Dasbor', 'admin'],
+        ]],
+        ['Master', [
+            ['admin.products.index', 'Produk (SKU)', 'admin/produk*'],
+            ['admin.catalog.index', 'Katalog toko & foto', 'admin/katalog*'],
+            ['admin.categories.index', 'Kategori', 'admin/kategori*'],
+            ['admin.variations.index', 'Variasi', 'admin/variasi*'],
+            ['admin.units.index', 'Satuan', 'admin/satuan*'],
+            ['admin.conversions.index', 'Konversi satuan', 'admin/konversi-satuan*'],
+            ['admin.prices.index', 'Harga', 'admin/harga*'],
+            ['admin.accounts.index', 'Akun (COA)', 'admin/akun*'],
+            ['admin.suppliers.index', 'Supplier', 'admin/supplier*'],
+            ['admin.customers.index', 'Customer', 'admin/customer*'],
+            ['admin.warehouses.index', 'Gudang', 'admin/gudang*'],
+            ['admin.etalases.index', 'Etalase', 'admin/etalase*'],
+        ]],
+        ['Pembelian', [
+            ['admin.purchases.index', 'Laporan pembelian', 'admin/pembelian*'],
+            ['admin.purchases.create', 'Input pembelian', 'admin/pembelian/baru'],
+            ['admin.transfers.index', 'Alih gudang & penerimaan', 'admin/alih-gudang*'],
+            ['admin.purchase-returns.index', 'Retur pembelian', 'admin/retur-pembelian*'],
+            ['admin.payables.index', 'Hutang', 'admin/hutang*'],
+            ['admin.supplier-payments.index', 'Pembayaran hutang', 'admin/bayar-hutang*'],
+        ]],
+        ['Penjualan', [
+            ['admin.sales.pos', 'Penjualan kasir', 'admin/penjualan/kasir*'],
+            ['admin.sales.index', 'Daftar penjualan', 'admin/penjualan'],
+            ['admin.sales.create', 'Input penjualan', 'admin/penjualan/baru'],
+            ['admin.sales.cancelled', 'Penjualan batal', 'admin/penjualan/batal*'],
+            ['admin.sales.items', 'Penjualan detail (item)', 'admin/penjualan/item*'],
+            ['admin.sale-returns.index', 'Retur penjualan', 'admin/retur-penjualan*'],
+            ['admin.overpayments.index', 'Kembalian lebih transfer', 'admin/kembalian-lebih*'],
+            ['admin.orders.index', 'Semua pesanan', 'admin/pesanan*'],
+        ]],
+        ['Order online', [
+            ['admin.online.new', 'Order baru', 'admin/order-online/baru*', $count('new')],
+            ['admin.online.process', 'Perlu proses', 'admin/order-online/proses*', $count('process')],
+            ['admin.online.shipped', 'Sedang dikirim', 'admin/order-online/dikirim*', $count('shipped')],
+            ['admin.online.done', 'Selesai', 'admin/order-online/selesai*'],
+            ['admin.online.cancelled', 'Batal', 'admin/order-online/batal*'],
+        ]],
+        ['Keuangan', [
+            ['admin.deposits.index', 'DP customer', 'admin/dp-customer*'],
+            ['admin.supplier-receivables.index', 'Piutang supplier', 'admin/piutang-supplier*'],
+            ['admin.cards.payable', 'Kartu hutang', 'admin/kartu-hutang*'],
+            ['admin.cards.receivable', 'Kartu piutang', 'admin/kartu-piutang*'],
+            ['admin.recap.index', 'Rekap pendapatan', 'admin/rekap-pendapatan*'],
+            ['admin.cash.index', 'Rekap kas harian', 'admin/kas-harian*'],
+            ['admin.balances.index', 'Mutasi saldo', 'admin/mutasi-saldo*'],
+            ['admin.assets.index', 'Aset & depresiasi', 'admin/aset*'],
+            ['admin.expenses.index', 'Biaya & kas masuk/keluar', 'admin/biaya*'],
+        ]],
+        ['Stok', [
+            ['admin.stock', 'Stok barang terkini', 'admin/stok'],
+            ['admin.stock.mutation', 'Mutasi stok', 'admin/mutasi-stok*'],
+            ['admin.stock.card', 'Kartu stok', 'admin/kartu-stok*'],
+            ['admin.adjustments.index', 'Penyesuaian stok', 'admin/penyesuaian-stok*'],
+            ['admin.opnames.create', 'Stok opname', 'admin/opname/baru'],
+            ['admin.opnames.index', 'Data stok opname', 'admin/opname'],
+        ]],
+        ['Laporan', [
+            ['admin.journals.index', 'Jurnal umum', 'admin/jurnal'],
+            ['admin.reports.ledger', 'General ledger', 'admin/buku-besar*'],
+            ['admin.reports.income', 'Jurnal laba rugi', 'admin/laba-rugi*'],
+            ['admin.reports.balance', 'Jurnal neraca', 'admin/neraca'],
+            ['admin.reports.trial', 'Neraca saldo', 'admin/neraca-saldo*'],
+            ['admin.adjustment-journals.index', 'Jurnal penyesuaian', 'admin/jurnal-penyesuaian*'],
+            ['admin.reconcile', 'Rekonsiliasi', 'admin/rekonsiliasi*'],
+        ]],
+        ['Konten toko', [
+            ['admin.articles.index', 'Artikel', 'admin/artikel*'],
+            ['admin.messages.index', 'Pesan masuk', 'admin/pesan*', $unread],
+            ['admin.reviews.index', 'Ulasan', 'admin/ulasan*', $pendingReviews],
+            ['admin.clients.index', 'Klien', 'admin/klien*'],
+        ]],
+        ['Sistem', [
+            ['admin.devices.index', 'Perangkat POS', 'admin/perangkat*'],
+            ['admin.settings.index', 'Pengaturan toko', 'admin/pengaturan*'],
+        ]],
     ];
+    // Hanya tampilkan menu yang route-nya ada; grup yang sedang dibuka otomatis terbuka.
+    $groups = collect($groups)->map(fn ($g) => [$g[0], collect($g[1])->filter(fn ($i) => \Illuminate\Support\Facades\Route::has($i[0]))->values()->all()])
+        ->filter(fn ($g) => $g[1] !== [])->values()->all();
 @endphp
 <!doctype html>
 <html lang="id">
@@ -38,8 +108,14 @@
     <aside class="side">
         <a class="side__brand" href="{{ route('admin.dashboard') }}">{{ config('store.name') }}<small>Admin</small></a>
         <nav aria-label="Menu admin">
-            @foreach ($nav as [$route, $label, $pattern])
-                <a href="{{ route($route) }}" @class(['is-on' => request()->is($pattern)])>{{ $label }}</a>
+            @foreach ($groups as [$title, $items])
+                @php($on = collect($items)->contains(fn ($i) => request()->is($i[2])))
+                <details class="navgroup" @if ($on || $title === 'Ringkasan') open @endif data-group="{{ $title }}">
+                    <summary>{{ $title }}@php($sum = collect($items)->sum(fn ($i) => (int) ($i[3] ?? 0)))@if ($sum)<span class="navcount">{{ $sum }}</span>@endif</summary>
+                    @foreach ($items as $i)
+                        <a href="{{ route($i[0]) }}" @class(['is-on' => request()->is($i[2])])>{{ $i[1] }}@if (! empty($i[3]))<span class="navcount">{{ $i[3] }}</span>@endif</a>
+                    @endforeach
+                </details>
             @endforeach
         </nav>
         <div class="side__foot">
@@ -64,6 +140,21 @@
         @yield('content')
     </main>
 </div>
+<script>
+    // Ingat grup menu yang dibuka (hanya kenyamanan; aman bila penyimpanan diblokir).
+    (function () {
+        try {
+            var saved = JSON.parse(localStorage.getItem('admin.nav') || '{}');
+            document.querySelectorAll('.navgroup').forEach(function (d) {
+                var k = d.dataset.group;
+                if (!d.querySelector('.is-on') && k in saved) d.open = saved[k];
+                d.addEventListener('toggle', function () { saved[k] = d.open; try { localStorage.setItem('admin.nav', JSON.stringify(saved)); } catch (e) {} });
+            });
+            var on = document.querySelector('.side .is-on'); if (on && on.scrollIntoView) on.scrollIntoView({ block: 'nearest' });
+        } catch (e) {}
+    })();
+</script>
+<script src="{{ asset('js/lines.js') }}?v={{ @filemtime(public_path('js/lines.js')) }}" defer></script>
 @stack('scripts')
 </body>
 </html>

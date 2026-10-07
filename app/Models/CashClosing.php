@@ -18,6 +18,11 @@ class CashClosing extends Model
         return ['date' => 'date', 'denominations' => 'array'];
     }
 
+    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function journals(): MorphMany
     {
         return $this->morphMany(Journal::class, 'source');

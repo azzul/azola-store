@@ -55,7 +55,7 @@ class DashboardController extends Controller
         $q = trim((string) $request->query('q'));
         $filter = $request->query('tampil');
 
-        $products = Product::with('category')
+        $products = Product::with('category')->select('products.*')->withOtherStock()
             ->when($q !== '', fn ($query) => $query->where(fn ($w) => $w->where('name', 'like', "%{$q}%")->orWhere('sku', 'like', "%{$q}%")->orWhere('barcode', $q)))
             ->orderBy('name')->get()
             ->when(in_array($filter, ['low', 'out'], true), fn ($c) => $c->filter(fn (Product $p) => $p->stockState() === $filter))

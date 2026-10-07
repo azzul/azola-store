@@ -47,9 +47,13 @@ return [
     // Barang dengan stok <= ambang ini tampil sebagai "Sisa X" di toko.
     'public_low_stock' => 5,
 
+    // Logo: kosong = pakai tanda bawaan (ikut warna tema). Isi path di folder public, mis. images/logo.svg.
+    'logo' => env('STORE_LOGO', ''),
+
     'instagram' => env('STORE_INSTAGRAM', ''),   // username tanpa @
     'facebook' => env('STORE_FACEBOOK', ''),     // URL halaman
     'tiktok' => env('STORE_TIKTOK', ''),         // username tanpa @
+    'youtube' => env('STORE_YOUTUBE', ''),       // URL kanal
     'map_url' => env('STORE_MAP_URL', ''),       // tautan Google Maps lokasi toko
 
     // Jam buka: [hari, jam]. Tampil di halaman Kontak.

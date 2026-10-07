@@ -22,6 +22,8 @@ class User extends Authenticatable
 
     public const ROLE_CASHIER = 'cashier';
 
+    public const ROLE_CUSTOMER = 'customer';
+
     /**
      * Get the attributes that should be cast.
      *
@@ -38,6 +40,17 @@ class User extends Authenticatable
     public function apiTokens(): HasMany
     {
         return $this->hasMany(ApiToken::class);
+    }
+
+    /** Akun toko (admin/kasir) boleh memakai API kasir. Pelanggan web tidak. */
+    public function isStaff(): bool
+    {
+        return in_array($this->role, [self::ROLE_ADMIN, self::ROLE_CASHIER], true);
+    }
+
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class, 'customer_id');
     }
 
     public function isAdmin(): bool

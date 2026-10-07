@@ -35,6 +35,7 @@ class CheckoutController extends Controller
             'lines' => $lines,
             'subtotal' => $this->cart->subtotal(),
             'methods' => config('store.web_payment_methods'),
+            'me' => $request->user(),
         ]);
     }
 
@@ -69,6 +70,7 @@ class CheckoutController extends Controller
         try {
             [$order] = $this->orders->create($data + [
                 'uuid' => $uuid,
+                'customer_id' => $request->user()?->role === \App\Models\User::ROLE_CUSTOMER ? $request->user()->id : null,
                 'shipping_fee' => Cart::shippingFor($data['delivery_method'], $this->cart->subtotal()),
                 'items' => $lines->map(fn ($line) => [
                     'product_id' => $line['product']->id,

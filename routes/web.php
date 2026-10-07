@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Store\AccountController;
 use App\Http\Controllers\Store\CartController;
 use App\Http\Controllers\Store\CheckoutController;
 use App\Http\Controllers\Store\HomeController;
@@ -38,6 +39,22 @@ Route::middleware('stock.cursor')->group(function () {
     Route::get('/kebijakan-privasi', [PageController::class, 'privacy'])->name('privacy');
     Route::get('/syarat-ketentuan', [PageController::class, 'terms'])->name('terms');
     Route::get('/pengembalian', [PageController::class, 'returns'])->name('returns');
+
+    // Akun pembeli
+    Route::middleware('guest')->group(function () {
+        Route::get('/masuk', [AccountController::class, 'loginForm'])->name('account.login');
+        Route::post('/masuk', [AccountController::class, 'login'])->middleware('throttle:20,1')->name('account.login.store');
+        Route::get('/daftar', [AccountController::class, 'registerForm'])->name('account.register');
+        Route::post('/daftar', [AccountController::class, 'register'])->middleware('throttle:10,10')->name('account.register.store');
+    });
+    Route::middleware('auth')->group(function () {
+        Route::post('/keluar', [AccountController::class, 'logout'])->name('account.logout');
+        Route::get('/akun', [AccountController::class, 'home'])->name('account.home');
+        Route::get('/akun/pesanan', [AccountController::class, 'orders'])->name('account.orders');
+        Route::get('/akun/profil', [AccountController::class, 'profile'])->name('account.profile');
+        Route::put('/akun/profil', [AccountController::class, 'updateProfile'])->name('account.profile.update');
+        Route::put('/akun/password', [AccountController::class, 'updatePassword'])->name('account.password');
+    });
 
     Route::get('/pesanan/{uuid}', [CheckoutController::class, 'order'])->whereUuid('uuid')->name('order.show');
 });

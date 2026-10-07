@@ -209,6 +209,7 @@ class OrderService
             'paid_total' => $paid,
             'cogs_total' => $cogs,
             'user_id' => $user?->id,
+            'customer_id' => $isWeb ? ($data['customer_id'] ?? null) : null,
             'ordered_at' => $orderedAt,
         ]);
 

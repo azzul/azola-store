@@ -31,7 +31,7 @@ class AuthController extends Controller
 
         $user = User::where('email', $data['email'])->first();
 
-        if (! $user || ! Hash::check($data['password'], $user->password)) {
+        if (! $user || ! Hash::check($data['password'], $user->password) || ! $user->isStaff()) {
             RateLimiter::hit($throttleKey, 60);
 
             return response()->json(['message' => 'Email atau password salah.'], 422);

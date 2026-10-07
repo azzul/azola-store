@@ -19,7 +19,7 @@ class AuthenticateApiToken
         $plain = $request->bearerToken();
         $token = $plain ? ApiToken::findByPlain($plain) : null;
 
-        if (! $token || ! $token->user) {
+        if (! $token || ! $token->user || ! $token->user->isStaff()) {
             return response()->json(['message' => 'Token tidak valid atau sudah dicabut.'], 401);
         }
 

@@ -19,11 +19,11 @@
                 <fieldset>
                     <legend>Data pemesan</legend>
                     <div class="field"><label for="customer_name">Nama lengkap</label>
-                        <input id="customer_name" name="customer_name" value="{{ old('customer_name') }}" required autocomplete="name"></div>
+                        <input id="customer_name" name="customer_name" value="{{ old('customer_name', $me->name ?? '') }}" required autocomplete="name"></div>
                     <div class="field"><label for="customer_phone">Nomor telepon atau WhatsApp</label>
-                        <input id="customer_phone" name="customer_phone" type="tel" value="{{ old('customer_phone') }}" required autocomplete="tel"></div>
+                        <input id="customer_phone" name="customer_phone" type="tel" value="{{ old('customer_phone', $me->phone ?? '') }}" required autocomplete="tel"></div>
                     <div class="field"><label for="customer_email">Email <span class="muted">(boleh dikosongkan)</span></label>
-                        <input id="customer_email" name="customer_email" type="email" value="{{ old('customer_email') }}" autocomplete="email"></div>
+                        <input id="customer_email" name="customer_email" type="email" value="{{ old('customer_email', $me->email ?? '') }}" autocomplete="email"></div>
                 </fieldset>
 
                 <fieldset>
@@ -32,7 +32,7 @@
                     <label class="choice"><input type="radio" name="delivery_method" value="ship" @checked(old('delivery_method') === 'ship')> <span>Kirim ke alamat
                         <small>{{ \App\Support\Rupiah::format(config('store.shipping.flat')) }}@if ((int) config('store.shipping.free_over') > 0), gratis mulai {{ \App\Support\Rupiah::format(config('store.shipping.free_over')) }}@endif</small></span></label>
                     <div class="field" id="address-field"><label for="customer_address">Alamat pengiriman</label>
-                        <textarea id="customer_address" name="customer_address" rows="3">{{ old('customer_address') }}</textarea></div>
+                        <textarea id="customer_address" name="customer_address" rows="3">{{ old('customer_address', $me->address ?? '') }}</textarea></div>
                 </fieldset>
 
                 <fieldset>

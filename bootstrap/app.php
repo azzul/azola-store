@@ -22,7 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'stock.cursor' => ShareStockCursor::class,
         ]);
 
-        $middleware->redirectGuestsTo(fn (Request $request) => route('admin.login'));
+        $middleware->redirectGuestsTo(fn (Request $request) => $request->is('admin', 'admin/*') ? route('admin.login') : route('account.login'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

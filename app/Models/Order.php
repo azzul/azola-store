@@ -25,12 +25,31 @@ class Order extends Model
             'grand_total' => 'integer',
             'paid_total' => 'integer',
             'cogs_total' => 'integer',
+            'returned_total' => 'integer',
+            'shipped_at' => 'datetime',
+            'delivered_at' => 'datetime',
+            'due_date' => 'date',
         ];
     }
 
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(OrderPayment::class);
+    }
+
+    public function buyer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class, 'buyer_id');
+    }
+
+    public function returns(): HasMany
+    {
+        return $this->hasMany(SaleReturn::class);
     }
 
     public function journals(): MorphMany
@@ -55,7 +74,7 @@ class Order extends Model
 
     public function outstanding(): int
     {
-        return max(0, $this->grand_total - $this->paid_total);
+        return max(0, $this->grand_total - $this->paid_total - $this->returned_total);
     }
 
     public function isWeb(): bool

@@ -34,6 +34,29 @@ class Product extends Model
         ];
     }
 
+    public function unitConversions(): HasMany
+    {
+        return $this->hasMany(UnitConversion::class);
+    }
+
+    public function levelPrices(): HasMany
+    {
+        return $this->hasMany(ProductPrice::class);
+    }
+
+    /** Harga jual untuk level harga tertentu; level bawaan/kosong = harga dasar. */
+    public function priceFor(?int $levelId): int
+    {
+        if (! $levelId) {
+            return (int) $this->price;
+        }
+
+        $price = $this->levelPrices->firstWhere('price_level_id', $levelId)?->price
+            ?? $this->levelPrices()->where('price_level_id', $levelId)->value('price');
+
+        return $price !== null ? (int) $price : (int) $this->price;
+    }
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
@@ -105,6 +128,19 @@ class Product extends Model
         return $this->hasMany(StockMovement::class);
     }
 
+    /** Tambahkan other_qty (stok di gudang selain gudang jual) supaya totalMilli() tidak query per baris. */
+    public function scopeWithOtherStock(Builder $query): Builder
+    {
+        $balances = \Illuminate\Support\Facades\DB::table('stock_balances')
+            ->selectRaw('COALESCE(SUM(qty), 0)')->whereColumn('stock_balances.product_id', 'products.id');
+        $transit = \Illuminate\Support\Facades\DB::table('stock_transfer_items')
+            ->join('stock_transfers', 'stock_transfers.id', '=', 'stock_transfer_items.stock_transfer_id')
+            ->selectRaw('COALESCE(SUM(stock_transfer_items.qty), 0)')
+            ->where('stock_transfers.status', 'sent')->whereColumn('stock_transfer_items.product_id', 'products.id');
+
+        return $query->selectRaw('(('.$balances->toSql().') + ('.$transit->toSql().')) as other_qty', array_merge($balances->getBindings(), $transit->getBindings()));
+    }
+
     public function scopeOnline(Builder $query): Builder
     {
         return $query->where('is_active', true)->where('is_online', true);
@@ -113,6 +149,19 @@ class Product extends Model
     public function qtyMilli(): int
     {
         return Qty::toMilli($this->stock_qty);
+    }
+
+    /** Stok di semua gudang (gudang jual + gudang lain + barang dalam perjalanan antar gudang). Dipakai menghitung HPP rata-rata dan nilai persediaan. */
+    public function totalMilli(): int
+    {
+        $others = array_key_exists('other_qty', $this->attributes)
+            ? (float) $this->attributes['other_qty']
+            : (float) \Illuminate\Support\Facades\DB::table('stock_balances')->where('product_id', $this->id)->sum('qty')
+                + (float) \Illuminate\Support\Facades\DB::table('stock_transfer_items')
+                    ->join('stock_transfers', 'stock_transfers.id', '=', 'stock_transfer_items.stock_transfer_id')
+                    ->where('stock_transfers.status', 'sent')->where('stock_transfer_items.product_id', $this->id)->sum('qty');
+
+        return $this->qtyMilli() + Qty::toMilli($others);
     }
 
     public function minMilli(): int
@@ -180,9 +229,10 @@ class Product extends Model
         return Str::upper(Str::substr(preg_replace('/[^\p{L}\p{N} ]/u', '', $this->name), 0, 2));
     }
 
+    /** Nilai persediaan seluruh gudang (stok x HPP). */
     public function inventoryValue(): int
     {
-        return Qty::value(max(0, $this->qtyMilli()), (int) $this->cost);
+        return Qty::value(max(0, $this->totalMilli()), (int) $this->cost);
     }
 
     public static function uniqueSlug(string $name, ?int $ignoreId = null): string

@@ -30,14 +30,14 @@ class DashboardController extends Controller
             'total' => (int) ($byDay[$d->format('Y-m-d')] ?? 0),
         ])->all();
 
-        $products = Product::where('is_active', true)->get(['id', 'stock_qty', 'min_stock', 'cost']);
+        $products = Product::where('is_active', true)->select(['id', 'stock_qty', 'min_stock', 'cost'])->withOtherStock()->get();
 
         return view('admin.dashboard', [
             'todayTotal' => (int) (clone $active)->where('ordered_at', '>=', $today)->sum('grand_total'),
             'todayCount' => (clone $active)->where('ordered_at', '>=', $today)->count(),
             'monthTotal' => (int) (clone $active)->where('ordered_at', '>=', now()->startOfMonth())->sum('grand_total'),
             'pendingWeb' => Order::where('channel', 'web')->where('status', 'pending')->count(),
-            'receivable' => (int) (clone $active)->selectRaw('COALESCE(SUM(grand_total - paid_total), 0) as v')->value('v'),
+            'receivable' => (int) (clone $active)->selectRaw('COALESCE(SUM(grand_total - paid_total - returned_total), 0) as v')->value('v'),
             'stockValue' => (int) $products->sum(fn (Product $p) => $p->inventoryValue()),
             'lowCount' => $products->filter(fn (Product $p) => $p->stockState() === 'low')->count(),
             'outCount' => $products->filter(fn (Product $p) => $p->stockState() === 'out')->count(),

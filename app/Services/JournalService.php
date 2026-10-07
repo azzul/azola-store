@@ -96,9 +96,9 @@ class JournalService
     }
 
     /** Buat jurnal pembalik (debit<->kredit). Aman dipanggil dua kali: yang kedua mengembalikan jurnal balik yang sama. */
-    public function reverse(Journal $journal, ?string $reason = null, ?int $userId = null): Journal
+    public function reverse(Journal $journal, ?string $reason = null, ?int $userId = null, bool $sameDate = false): Journal
     {
-        return DB::transaction(function () use ($journal, $reason, $userId) {
+        return DB::transaction(function () use ($journal, $reason, $userId, $sameDate) {
             $fresh = Journal::whereKey($journal->id)->lockForUpdate()->firstOrFail();
 
             if ($fresh->reversed_by_id) {
@@ -121,7 +121,7 @@ class JournalService
                 'Pembalik '.$fresh->number.($reason ? ': '.$reason : ''),
                 $lines,
                 $fresh->source,
-                now(),
+                $sameDate ? $fresh->date : now(),
                 $userId,
                 ['reversal_of_id' => $fresh->id],
             );
@@ -133,7 +133,7 @@ class JournalService
     }
 
     /** Balik semua jurnal aktif milik satu sumber (mis. satu pesanan). */
-    public function reverseForSource(Model $source, ?string $reason = null, ?int $userId = null): int
+    public function reverseForSource(Model $source, ?string $reason = null, ?int $userId = null, bool $sameDate = false): int
     {
         $journals = Journal::query()
             ->where('source_type', $source->getMorphClass())
@@ -144,7 +144,7 @@ class JournalService
             ->get();
 
         foreach ($journals as $journal) {
-            $this->reverse($journal, $reason, $userId);
+            $this->reverse($journal, $reason, $userId, $sameDate);
         }
 
         return $journals->count();

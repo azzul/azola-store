@@ -1,5 +1,7 @@
 <?php
 
+use App\Exceptions\InsufficientStockException;
+use App\Exceptions\UnbalancedJournalException;
 use App\Http\Middleware\AuthenticateApiToken;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\ShareStockCursor;
@@ -25,6 +27,15 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectGuestsTo(fn (Request $request) => $request->is('admin', 'admin/*') ? route('admin.login') : route('account.login'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // Di dasbor admin, stok kurang atau jurnal tak seimbang tampil sebagai pesan di form, bukan halaman error.
+        $exceptions->render(function (InsufficientStockException|UnbalancedJournalException $e, Request $request) {
+            if ($request->is('admin', 'admin/*') && ! $request->expectsJson()) {
+                return back()->withInput()->withErrors(['stock' => $e->getMessage()]);
+            }
+
+            return null;
+        });
+
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );

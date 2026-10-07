@@ -8,6 +8,7 @@ use App\Models\JournalLine;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\StockMovement;
+use App\Models\Warehouse;
 use App\Support\Qty;
 use App\Support\Rupiah;
 
@@ -41,6 +42,7 @@ class ReconciliationService
     private function stockCache(): array
     {
         $sums = StockMovement::query()
+            ->where(fn ($q) => $q->where('warehouse_id', Warehouse::mainId())->orWhereNull('warehouse_id'))
             ->selectRaw('product_id, SUM(qty_change) as total')
             ->groupBy('product_id')
             ->pluck('total', 'product_id');
@@ -56,6 +58,20 @@ class ReconciliationService
                     'cache' => Qty::pretty($product->stock_qty),
                     'from_movements' => Qty::pretty(Qty::fromMilli($expected)),
                 ];
+            }
+        }
+
+        // Gudang lain: saldo per gudang harus sama dengan jumlah mutasinya.
+        $mainId = Warehouse::mainId();
+        $other = StockMovement::query()->where('warehouse_id', '!=', $mainId)->whereNotNull('warehouse_id')
+            ->selectRaw('product_id, warehouse_id, SUM(qty_change) as total')->groupBy('product_id', 'warehouse_id')->get()
+            ->keyBy(fn ($r) => $r->product_id.'-'.$r->warehouse_id);
+        $balances = \Illuminate\Support\Facades\DB::table('stock_balances')->get()->keyBy(fn ($r) => $r->product_id.'-'.$r->warehouse_id);
+        foreach ($other->keys()->merge($balances->keys())->unique() as $key) {
+            $a = Qty::toMilli($other[$key]->total ?? 0);
+            $b = Qty::toMilli($balances[$key]->qty ?? 0);
+            if ($a !== $b) {
+                $bad[] = ['sku' => 'gudang '.$key, 'name' => 'saldo gudang lain', 'cache' => Qty::pretty(Qty::fromMilli($b)), 'from_movements' => Qty::pretty(Qty::fromMilli($a))];
             }
         }
 
@@ -84,7 +100,7 @@ class ReconciliationService
     private function inventoryValue(): array
     {
         $ledger = Account::netDebitByKey('inventory');
-        $stock = (int) Product::query()->get(['id', 'stock_qty', 'cost'])->sum(fn (Product $p) => $p->inventoryValue());
+        $stock = (int) Product::query()->select(['id', 'stock_qty', 'cost'])->withOtherStock()->get()->sum(fn (Product $p) => $p->inventoryValue());
         $diff = $ledger - $stock;
         $tolerance = (int) config('store.reconcile_tolerance');
 
@@ -117,7 +133,7 @@ class ReconciliationService
     private function receivableVsOrders(): array
     {
         $ledger = Account::netDebitByKey('receivable');
-        $orders = (int) Order::where('status', '!=', 'cancelled')->selectRaw('COALESCE(SUM(grand_total - paid_total), 0) as v')->value('v');
+        $orders = (int) Order::where('status', '!=', 'cancelled')->selectRaw('COALESCE(SUM(grand_total - paid_total - returned_total), 0) as v')->value('v');
 
         $rows = $ledger !== $orders
             ? [['account_balance' => Rupiah::format($ledger), 'orders_outstanding' => Rupiah::format($orders), 'difference' => Rupiah::format($ledger - $orders)]]
@@ -153,7 +169,7 @@ class ReconciliationService
     {
         $bad = Order::query()
             ->whereRaw('grand_total <> subtotal - discount_total + tax_total + shipping_fee')
-            ->orWhereRaw('paid_total > grand_total')
+            ->orWhereRaw('paid_total + returned_total > grand_total')
             ->limit(50)->get(['number', 'subtotal', 'discount_total', 'tax_total', 'shipping_fee', 'grand_total', 'paid_total'])
             ->map(fn ($o) => ['order' => $o->number, 'grand_total' => $o->grand_total, 'paid_total' => $o->paid_total])
             ->all();

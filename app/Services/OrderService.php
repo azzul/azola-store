@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\SaleReturn;
 use App\Models\User;
 use App\Support\Qty;
 use Carbon\Carbon;
@@ -83,11 +85,15 @@ class OrderService
                 $user?->id,
             );
 
+            $locked->payments()->create(['kind' => 'payment', 'method' => $method, 'amount' => $amount, 'paid_at' => now(), 'user_id' => $user?->id]);
+
             $paid = $locked->paid_total + $amount;
             $locked->forceFill([
                 'paid_total' => $paid,
-                'payment_status' => $paid >= $locked->grand_total ? 'paid' : 'partial',
+                'payment_status' => $this->paymentStatus($paid, $locked->grand_total - $locked->returned_total),
             ])->save();
+
+            $this->advanceAfterPayment($locked);
 
             return $locked->load('items');
         });
@@ -101,6 +107,13 @@ class OrderService
 
             if ($locked->isCancelled()) {
                 return $locked->load('items');
+            }
+
+            if (SaleReturn::where('order_id', $locked->id)->exists()) {
+                throw ValidationException::withMessages(['order' => 'Pesanan ini sudah punya retur penjualan, jadi tidak bisa dibatalkan.']);
+            }
+            if ($locked->payments()->where('kind', 'deposit')->exists()) {
+                throw ValidationException::withMessages(['order' => 'Pesanan ini dibayar memakai DP pelanggan. Lakukan retur penjualan, bukan pembatalan.']);
             }
 
             foreach ($locked->items()->orderBy('product_id')->get() as $item) {
@@ -124,6 +137,7 @@ class OrderService
 
             $locked->forceFill([
                 'status' => 'cancelled',
+                'fulfillment' => $locked->isWeb() ? 'cancelled' : $locked->fulfillment,
                 'cancelled_at' => now(),
                 'payment_status' => $locked->paid_total > 0 ? 'refunded' : 'unpaid',
             ])->save();
@@ -135,10 +149,56 @@ class OrderService
     public function complete(Order $order): Order
     {
         if ($order->status === 'pending') {
-            $order->forceFill(['status' => 'completed'])->save();
+            $order->forceFill([
+                'status' => 'completed',
+                'fulfillment' => $order->isWeb() ? 'done' : $order->fulfillment,
+                'delivered_at' => $order->delivered_at ?? now(),
+            ])->save();
         }
 
         return $order;
+    }
+
+    /** Pesanan online: dikonfirmasi dan siap dikemas/diambil. */
+    public function confirm(Order $order): Order
+    {
+        if ($order->isCancelled() || $order->fulfillment !== 'new') {
+            throw ValidationException::withMessages(['order' => 'Hanya pesanan baru yang bisa dikonfirmasi.']);
+        }
+
+        $order->forceFill(['fulfillment' => 'process'])->save();
+
+        return $order;
+    }
+
+    /** Pesanan online: dikirim lewat kurir (nomor resi boleh dikosongkan untuk kurir toko). */
+    public function ship(Order $order, string $courier, ?string $tracking = null): Order
+    {
+        if ($order->isCancelled() || ! in_array($order->fulfillment, ['new', 'process'], true)) {
+            throw ValidationException::withMessages(['order' => 'Pesanan ini tidak bisa dikirim pada tahap sekarang.']);
+        }
+        if ($order->payment_status !== 'paid' && $order->payment_method !== 'cod') {
+            throw ValidationException::withMessages(['order' => 'Pesanan belum lunas. Catat pembayaran dulu (kecuali bayar di tempat).']);
+        }
+
+        $order->forceFill([
+            'fulfillment' => 'shipped', 'courier' => $courier, 'tracking_no' => $tracking, 'shipped_at' => now(),
+        ])->save();
+
+        return $order;
+    }
+
+    private function paymentStatus(int $paid, int $due): string
+    {
+        return $paid >= $due && $due > 0 ? 'paid' : ($paid > 0 ? 'partial' : 'unpaid');
+    }
+
+    /** Pesanan online yang lunas otomatis masuk tahap "perlu proses". */
+    private function advanceAfterPayment(Order $order): void
+    {
+        if ($order->isWeb() && $order->fulfillment === 'new' && $order->payment_status === 'paid') {
+            $order->forceFill(['fulfillment' => 'process'])->save();
+        }
     }
 
     // ------------------------------------------------------------------------
@@ -152,7 +212,9 @@ class OrderService
             throw ValidationException::withMessages(['payment_method' => 'Metode pembayaran tidak dikenal.']);
         }
 
-        $lines = $this->resolveLines($data['items'] ?? [], $isWeb);
+        $buyer = $this->resolveBuyer($data, $isWeb);
+        $levelId = $isWeb ? null : ((int) ($data['price_level_id'] ?? 0) ?: $buyer?->price_level_id);
+        $lines = $this->resolveLines($data['items'] ?? [], $isWeb, $levelId);
 
         $subtotal = 0;
         $lineDiscounts = 0;
@@ -210,10 +272,17 @@ class OrderService
             'cogs_total' => $cogs,
             'user_id' => $user?->id,
             'customer_id' => $isWeb ? ($data['customer_id'] ?? null) : null,
+            'buyer_id' => $buyer?->id,
+            'fulfillment' => $isWeb ? 'new' : null,
+            'due_date' => ! empty($data['due_date']) ? Carbon::parse($data['due_date'])->toDateString() : null,
             'ordered_at' => $orderedAt,
         ]);
 
         $order->forceFill(['number' => sprintf('INV-%s-%05d', $orderedAt->format('ymd'), $order->id)])->save();
+
+        if ($paid > 0) {
+            $order->payments()->create(['kind' => 'payment', 'method' => $method, 'amount' => $paid, 'paid_at' => $orderedAt, 'user_id' => $user?->id]);
+        }
 
         foreach ($lines as $line) {
             /** @var Product $product */
@@ -224,7 +293,7 @@ class OrderService
                 'sku' => $product->sku,
                 'name' => $product->name,
                 'qty' => Qty::fromMilli($line['milli']),
-                'price' => $product->price,
+                'price' => $line['price'],
                 'discount' => $line['discount'],
                 'line_total' => $line['gross'] - $line['discount'],
                 'unit_cost' => (int) $product->cost,
@@ -269,7 +338,7 @@ class OrderService
      *
      * @return array<int, array{product: Product, milli: int, discount: int, gross: int, cogs: int}>
      */
-    private function resolveLines(array $items, bool $isWeb): array
+    private function resolveLines(array $items, bool $isWeb, ?int $levelId = null): array
     {
         if ($items === []) {
             throw ValidationException::withMessages(['items' => 'Keranjang kosong.']);
@@ -307,7 +376,8 @@ class OrderService
                 throw ValidationException::withMessages(['items' => 'Produk tidak tersedia untuk dijual: '.($product?->name ?? "#{$id}")]);
             }
 
-            $gross = Qty::value($want['milli'], $product->price);
+            $price = $isWeb ? (int) $product->price : $product->priceFor($levelId);
+            $gross = Qty::value($want['milli'], $price);
             $discount = $isWeb ? 0 : $want['discount'];
 
             if ($discount > $gross) {
@@ -319,11 +389,33 @@ class OrderService
                 'milli' => $want['milli'],
                 'discount' => $discount,
                 'gross' => $gross,
+                'price' => $price,
                 'cogs' => Qty::value($want['milli'], (int) $product->cost),
             ];
         }
 
         return $lines;
+    }
+
+    /** Hubungkan pesanan ke master customer: dari id yang dikirim, akun web, atau nomor telepon. */
+    private function resolveBuyer(array $data, bool $isWeb): ?Customer
+    {
+        if (! empty($data['buyer_id']) && ($c = Customer::find($data['buyer_id']))) {
+            return $c;
+        }
+
+        if ($isWeb && ! empty($data['customer_id'])) {
+            $customer = Customer::firstWhere('user_id', $data['customer_id'])
+                ?? Customer::fromContact($data['customer_name'] ?? null, $data['customer_phone'] ?? null, $data['customer_email'] ?? null, $data['customer_address'] ?? null);
+
+            if ($customer && ! $customer->user_id) {
+                $customer->forceFill(['user_id' => $data['customer_id']])->save();
+            }
+
+            return $customer;
+        }
+
+        return Customer::fromContact($data['customer_name'] ?? null, $data['customer_phone'] ?? null, $data['customer_email'] ?? null, $data['customer_address'] ?? null);
     }
 
     private function paymentAccount(string $method): string

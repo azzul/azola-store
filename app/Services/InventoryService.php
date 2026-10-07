@@ -24,6 +24,7 @@ class InventoryService
     public function __construct(
         private StockService $stock,
         private JournalService $journals,
+        private CostingService $costing,
     ) {}
 
     public function receive(
@@ -34,6 +35,7 @@ class InventoryService
         ?int $userId = null,
         string $source = 'admin',
         ?string $note = null,
+        ?int $warehouseId = null,
     ): StockMovement {
         $milli = Qty::toMilli($qty);
 
@@ -47,20 +49,17 @@ class InventoryService
             throw ValidationException::withMessages(['funding' => 'Sumber dana tidak dikenal.']);
         }
 
-        return DB::transaction(function () use ($product, $milli, $unitCost, $funding, $userId, $source, $note) {
+        return DB::transaction(function () use ($product, $milli, $unitCost, $funding, $userId, $source, $note, $warehouseId) {
             $locked = Product::whereKey($product->id)->lockForUpdate()->firstOrFail();
 
-            // HPP rata-rata tertimbang. Stok minus/nol tidak ikut menimbang.
-            $oldMilli = max(0, $locked->qtyMilli());
-            $newCost = (int) round(($oldMilli * (int) $locked->cost + $milli * $unitCost) / ($oldMilli + $milli));
+            $value = Qty::value($milli, $unitCost);
+
+            // HPP rata-rata tertimbang seluruh gudang; stok minus/nol tidak ikut menimbang.
+            $this->costing->revalue($locked, $milli, $value);
 
             $movement = $this->stock->apply(
-                $locked->id, $milli, 'purchase', null, $source, $userId, $note, $unitCost,
+                $locked->id, $milli, 'purchase', null, $source, $userId, $note, $unitCost, false, $warehouseId,
             );
-
-            $locked->forceFill(['cost' => $newCost])->save();
-
-            $value = Qty::value($milli, $unitCost);
 
             $this->journals->post(
                 'purchase',

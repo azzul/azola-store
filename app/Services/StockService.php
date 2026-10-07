@@ -6,6 +6,7 @@ use App\Events\StockChanged;
 use App\Exceptions\InsufficientStockException;
 use App\Models\Product;
 use App\Models\StockMovement;
+use App\Models\Warehouse;
 use App\Support\Qty;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -28,21 +29,41 @@ class StockService
         ?string $note = null,
         ?int $unitCost = null,
         bool $allowNegative = false,
+        ?int $warehouseId = null,
     ): StockMovement {
-        return DB::transaction(function () use ($productId, $deltaMilli, $type, $reference, $source, $userId, $note, $unitCost, $allowNegative) {
+        return DB::transaction(function () use ($productId, $deltaMilli, $type, $reference, $source, $userId, $note, $unitCost, $allowNegative, $warehouseId) {
             $product = Product::whereKey($productId)->lockForUpdate()->firstOrFail();
 
-            $before = $product->qtyMilli();
+            $mainId = Warehouse::mainId();
+            $warehouseId ??= $mainId;
+            $isMain = $warehouseId === $mainId;
+
+            if ($isMain) {
+                $before = $product->qtyMilli();
+            } else {
+                $row = DB::table('stock_balances')->where(['product_id' => $product->id, 'warehouse_id' => $warehouseId])->first();
+                $before = Qty::toMilli($row->qty ?? 0);
+            }
+
             $after = $before + $deltaMilli;
 
             if ($after < 0 && ! $allowNegative) {
                 throw new InsufficientStockException($product, -$deltaMilli, $before);
             }
 
-            $product->forceFill(['stock_qty' => Qty::fromMilli($after)])->save();
+            if ($isMain) {
+                // Hanya gudang jual yang memengaruhi stok di toko web dan kasir.
+                $product->forceFill(['stock_qty' => Qty::fromMilli($after)])->save();
+            } else {
+                DB::table('stock_balances')->updateOrInsert(
+                    ['product_id' => $product->id, 'warehouse_id' => $warehouseId],
+                    ['qty' => Qty::fromMilli($after)],
+                );
+            }
 
             $movement = StockMovement::create([
                 'product_id' => $product->id,
+                'warehouse_id' => $warehouseId,
                 'type' => $type,
                 'qty_change' => Qty::fromMilli($deltaMilli),
                 'qty_after' => Qty::fromMilli($after),
@@ -54,7 +75,9 @@ class StockService
                 'note' => $note,
             ]);
 
-            StockChanged::dispatch($product->id, Qty::fromMilli($after), $movement->id);
+            if ($isMain) {
+                StockChanged::dispatch($product->id, Qty::fromMilli($after), $movement->id);
+            }
 
             return $movement;
         });

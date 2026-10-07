@@ -73,6 +73,16 @@ return [
         ],
     ],
 
+    // Bagian "Kenapa kami" di beranda. key = nama ikon (stock, price, pay, pickup, help, safe).
+    'why' => [
+        ['key' => 'stock', 'title' => 'Stok jujur dan realtime', 'text' => 'Web, kasir toko, dan aplikasi Android memakai satu stok. Barang yang tampil tersedia memang ada di rak.'],
+        ['key' => 'price', 'title' => 'Harga sama dengan di toko', 'text' => 'Tidak ada harga khusus online yang diam-diam lebih mahal. Yang kamu lihat di sini, itu juga harga di kasir.'],
+        ['key' => 'pay', 'title' => 'Bayar sesuai kebiasaanmu', 'text' => 'Transfer bank, QRIS, atau bayar di tempat. Pesanan transfer diproses begitu pembayaran kami konfirmasi.'],
+        ['key' => 'pickup', 'title' => 'Ambil di toko atau dikirim', 'text' => 'Ambil sendiri tanpa ongkos kirim, atau minta dikirim ke alamatmu. Ada gratis ongkir untuk belanja besar.'],
+        ['key' => 'safe', 'title' => 'Stok dipesankan saat checkout', 'text' => 'Barang di pesananmu langsung disisihkan, jadi tidak diambil pembeli lain sebelum kamu bayar.'],
+        ['key' => 'help', 'title' => 'Dilayani orang sungguhan', 'text' => 'Ada pertanyaan atau kendala? Kamu bicara dengan tim toko lewat WhatsApp, bukan dengan mesin penjawab.'],
+    ],
+
     'faq' => [
         ['q' => 'Apakah stok di web sama dengan di toko?', 'a' => 'Ya. Web, kasir di toko, dan aplikasi Android memakai satu database stok. Begitu barang terjual di kasir, stok di web ikut berkurang.'],
         ['q' => 'Bagaimana cara membayar?', 'a' => 'Pilih transfer bank, QRIS, atau bayar di tempat saat checkout. Pesanan transfer diproses setelah pembayaran kami konfirmasi.'],

@@ -34,7 +34,13 @@ class HomeController extends Controller
             'featured' => $featured,
             'categories' => $categories,
             'faq' => config('store.faq'),
-            'homeReviews' => Testimonial::published()->where('rating', '>=', 4)->latest('id')->limit(3)->get(),
+            'stats' => [
+                'products' => Product::online()->count(),
+                'categories' => $categories->count(),
+            ],
+            'reviewSummary' => Testimonial::summary(),
+            'why' => config('store.why'),
+            'homeReviews' => Testimonial::published()->where('rating', '>=', 4)->latest('id')->limit(6)->get(),
             'homeClients' => Client::published()->limit(8)->get(),
         ]);
     }

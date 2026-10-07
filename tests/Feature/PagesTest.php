@@ -68,6 +68,23 @@ class PagesTest extends TestCase
         $this->get('/')->assertSee('Kata pelanggan')->assertSee('Barang sesuai');
     }
 
+    public function test_home_has_rich_sections_and_no_fake_content(): void
+    {
+        $html = $this->get('/')->assertOk()->getContent();
+
+        foreach (['data-hero', 'id="kenapa-kami"', 'id="cara-belanja"', 'data-sync', 'id="faq"', 'class="visit"'] as $needle) {
+            $this->assertStringContainsString($needle, $html);
+        }
+        $this->assertSame(1, substr_count($html, '<h1'), 'Satu h1 per halaman.');
+        $this->assertSame(count(config('store.why')), substr_count($html, 'class="why__card"'));
+        // Tanpa ulasan/klien sungguhan: tampil ajakan menulis ulasan, bagian klien disembunyikan.
+        $this->assertStringContainsString('Tulis ulasan', $html);
+        $this->assertStringNotContainsString('Kata pelanggan', $html);
+        $this->assertStringNotContainsString('Dipercaya oleh', $html);
+        $this->assertStringContainsString('css/home.css', $html);
+        $this->assertStringContainsString('js/home.js', $html);
+    }
+
     public function test_review_validation_and_honeypot(): void
     {
         $this->post(route('reviews.store'), ['name' => 'A', 'rating' => 9, 'body' => 'pendek'])->assertSessionHasErrors(['rating', 'body']);

@@ -6,6 +6,7 @@ Stok, penjualan, dan jurnal selalu sama di web, desktop, dan Android.
 ## Isi
 
 - **Toko online** (publik): beranda, katalog, cari, halaman produk, keranjang, checkout, status pesanan. SEO lengkap (title/meta/canonical, JSON-LD Product/Store/FAQ/Breadcrumb, sitemap.xml, robots.txt). Stok di halaman ikut berubah otomatis.
+- **Beranda 3D**: hero dengan tumpukan kardus yang terbuka dan berputar saat digulir (kartu produk melayang memakai data dan stok sungguhan), Kenapa kami, kategori, produk pilihan, cara belanja (kartu bertumpuk 3D), diagram "satu stok", ulasan, klien, FAQ, dan ajakan mampir. Gerak murni CSS + satu berkas JS kecil (`public/css/home.css`, `public/js/home.js`), mati otomatis bila pengunjung memilih "kurangi gerakan". Isi "Kenapa kami" diatur di `config/store.php` (`why`). Font Bricolage Grotesque dan Figtree dibawa sendiri di `public/fonts` (lisensi OFL).
 - **Halaman profil**: Tentang kami (`/tentang-kami`), Kontak (`/kontak`, formulir masuk ke admin), Ulasan (`/ulasan`), Klien (`/klien`), Pertanyaan umum, Kebijakan privasi, Syarat, Pengembalian. Semua masuk sitemap dan punya data terstruktur.
 - **Dashboard admin** (`/admin`): ringkasan penjualan, stok realtime, pesanan (catat bayar, selesai, batal), produk (foto, stok masuk, penyesuaian, opname), kategori, jurnal, laporan, rekonsiliasi, token perangkat POS, pesan masuk, moderasi ulasan, daftar klien.
 - **API Azola Pos** (`/api/v1`): login perangkat, sinkron produk/stok, kirim penjualan (aman diulang), laporan admin.

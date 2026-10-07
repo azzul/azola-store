@@ -1,5 +1,9 @@
 /* Azola Store - tema toko. Warna utama dan aksen diatur dari .env (STORE_BRAND_COLOR, STORE_ACCENT_COLOR). */
 
+/* Font dibawa sendiri (folder public/fonts, lisensi OFL) supaya tetap tampil saat offline. */
+@font-face { font-family: "Bricolage Grotesque"; src: url("../fonts/bricolage-grotesque-latin-wght-normal.woff2") format("woff2"); font-weight: 200 800; font-style: normal; font-display: swap; }
+@font-face { font-family: "Figtree"; src: url("../fonts/figtree-latin-wght-normal.woff2") format("woff2"); font-weight: 300 900; font-style: normal; font-display: swap; }
+
 :root {
   --ink: #14231c;
   --paper: #f4f5f1;
@@ -11,8 +15,8 @@
   --warn: #9a5b00;
   --danger: #b3261e;
   --radius: 6px;
-  --font: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-head: "Segoe UI Variable Display", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  --font: "Figtree", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-head: "Bricolage Grotesque", "Segoe UI Variable Display", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
 }
 
 *, *::before, *::after { box-sizing: border-box; }

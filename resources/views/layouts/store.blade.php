@@ -28,8 +28,10 @@
     @else
         <meta name="twitter:card" content="summary">
     @endif
+    <link rel="preload" href="{{ asset('fonts/bricolage-grotesque-latin-wght-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
     <style>:root{--brand:{{ $brand }};--tag:{{ $accent }}}</style>
     <link rel="stylesheet" href="{{ asset('css/store.css') }}?v={{ @filemtime(public_path('css/store.css')) }}">
+    @stack('head')
     @foreach ($seo['jsonld'] as $ld)
         <script type="application/ld+json">{!! json_encode($ld, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP) !!}</script>
     @endforeach
@@ -92,5 +94,6 @@
 
 <script src="{{ asset('js/live-stock.js') }}?v={{ @filemtime(public_path('js/live-stock.js')) }}" defer
         data-feed="{{ url('/api/v1/public/stock-feed') }}" data-cursor="{{ $stockCursor ?? 0 }}"></script>
+@stack('scripts')
 </body>
 </html>

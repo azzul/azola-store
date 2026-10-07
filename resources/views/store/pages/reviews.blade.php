@@ -23,7 +23,7 @@
             @endif
         </div>
 
-        <form class="card-form" method="post" action="{{ route('reviews.store') }}">
+        <form id="tulis" class="card-form" method="post" action="{{ route('reviews.store') }}">
             @csrf
             <h2 class="h-sm">Tulis ulasan</h2>
             @if (session('sent'))<div class="notice-ok" role="status">Terima kasih. Ulasanmu akan tampil setelah kami periksa.</div>@endif

@@ -3,8 +3,10 @@
 use App\Http\Controllers\Store\AccountController;
 use App\Http\Controllers\Store\CartController;
 use App\Http\Controllers\Store\CheckoutController;
+use App\Http\Controllers\Store\ArticleController;
 use App\Http\Controllers\Store\HomeController;
 use App\Http\Controllers\Store\PageController;
+use App\Http\Controllers\Store\PricelistController;
 use App\Http\Controllers\Store\ReviewController;
 use App\Http\Controllers\Store\SeoController;
 use App\Http\Controllers\Store\ShopController;
@@ -30,6 +32,10 @@ Route::middleware('stock.cursor')->group(function () {
 
     Route::get('/checkout', [CheckoutController::class, 'show'])->name('checkout.show');
     Route::post('/checkout', [CheckoutController::class, 'store'])->middleware('throttle:10,1')->name('checkout.store');
+    Route::get('/pricelist', [PricelistController::class, 'index'])->name('pricelist');
+    Route::get('/pricelist.pdf', [PricelistController::class, 'pdf'])->middleware('throttle:30,1')->name('pricelist.pdf');
+    Route::get('/artikel', [ArticleController::class, 'index'])->name('articles.index');
+    Route::get('/artikel/{article:slug}', [ArticleController::class, 'show'])->name('articles.show');
     Route::get('/tentang-kami', [PageController::class, 'about'])->name('about');
     Route::get('/kontak', [PageController::class, 'contact'])->name('contact');
     Route::post('/kontak', [PageController::class, 'contactSend'])->middleware('throttle:5,10')->name('contact.send');

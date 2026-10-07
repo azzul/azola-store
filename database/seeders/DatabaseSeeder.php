@@ -24,5 +24,6 @@ class DatabaseSeeder extends Seeder
         $admin->save();
 
         $this->call(DemoStoreSeeder::class);
+        $this->call(DemoArticleSeeder::class);
     }
 }

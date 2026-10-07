@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AuthController;
+use App\Http\Controllers\Admin\ArticleController;
 use App\Http\Controllers\Admin\CatalogController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\EtalaseController;
@@ -40,6 +41,13 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::put('katalog/{group}/foto/{image}', [CatalogController::class, 'updateImage'])->name('catalog.images.update');
         Route::post('katalog/{group}/foto/{image}/pindah', [CatalogController::class, 'moveImage'])->name('catalog.images.move');
         Route::delete('katalog/{group}/foto/{image}', [CatalogController::class, 'destroyImage'])->name('catalog.images.destroy');
+
+        Route::get('artikel', [ArticleController::class, 'index'])->name('articles.index');
+        Route::get('artikel/baru', [ArticleController::class, 'create'])->name('articles.create');
+        Route::post('artikel', [ArticleController::class, 'store'])->name('articles.store');
+        Route::get('artikel/{article}', [ArticleController::class, 'edit'])->name('articles.edit');
+        Route::put('artikel/{article}', [ArticleController::class, 'update'])->name('articles.update');
+        Route::delete('artikel/{article}', [ArticleController::class, 'destroy'])->name('articles.destroy');
 
         Route::get('etalase', [EtalaseController::class, 'index'])->name('etalases.index');
         Route::post('etalase', [EtalaseController::class, 'store'])->name('etalases.store');

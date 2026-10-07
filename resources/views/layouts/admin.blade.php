@@ -12,6 +12,7 @@
         ['admin.products.index', 'SKU dan stok', 'admin/produk*'],
         ['admin.etalases.index', 'Etalase', 'admin/etalase*'],
         ['admin.categories.index', 'Kategori', 'admin/kategori*'],
+        ['admin.articles.index', 'Artikel', 'admin/artikel*'],
         ['admin.journals.index', 'Jurnal', 'admin/jurnal*'],
         ['admin.report', 'Laporan', 'admin/laporan*'],
         ['admin.reconcile', 'Rekonsiliasi', 'admin/rekonsiliasi*'],

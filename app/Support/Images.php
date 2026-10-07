@@ -60,6 +60,45 @@ final class Images
         return $paths;
     }
 
+    /**
+     * Sampul artikel: besar (maks. 1400 px, rasio asli) dan kartu 16:9 (1000x560, dipotong dari tengah).
+     *
+     * @return array{path: string, card_path: string}
+     */
+    public static function storeWide(UploadedFile|string $file, string $dir = 'articles'): array
+    {
+        $bytes = $file instanceof UploadedFile ? file_get_contents($file->getRealPath()) : file_get_contents($file);
+        $src = $bytes === false ? false : @imagecreatefromstring($bytes);
+        if (! $src) {
+            throw new RuntimeException('File gambar tidak bisa dibaca.');
+        }
+
+        $w = imagesx($src);
+        $h = imagesy($src);
+        $ext = function_exists('imagewebp') ? 'webp' : 'jpg';
+        $base = trim($dir, '/').'/'.Str::lower(Str::random(14));
+
+        $large = self::fit($src, $w, $h, self::LARGE);
+
+        // potong 16:9 dari tengah
+        $tw = 1000;
+        $th = 560;
+        $ratio = $tw / $th;
+        $cw = $w / $h > $ratio ? (int) round($h * $ratio) : $w;
+        $ch = $w / $h > $ratio ? $h : (int) round($w / $ratio);
+        $card = self::canvas($tw, $th);
+        imagecopyresampled($card, $src, 0, 0, (int) floor(($w - $cw) / 2), (int) floor(($h - $ch) / 2), $tw, $th, $cw, $ch);
+
+        self::write($large, "{$base}.{$ext}", $ext);
+        self::write($card, "{$base}-card.{$ext}", $ext);
+
+        foreach ([$src, $large, $card] as $img) {
+            imagedestroy($img);
+        }
+
+        return ['path' => "{$base}.{$ext}", 'card_path' => "{$base}-card.{$ext}"];
+    }
+
     public static function delete(?string ...$paths): void
     {
         $paths = array_filter($paths);

@@ -166,6 +166,7 @@ class ProductController extends Controller
         ]);
 
         unset($data['image']);
+        \App\Models\Unit::firstOrCreate(['name' => $data['unit']]);
         $data['min_stock'] = $data['min_stock'] ?? 0;
         foreach (['is_active', 'is_online', 'is_featured'] as $flag) {
             $data[$flag] = $request->boolean($flag);

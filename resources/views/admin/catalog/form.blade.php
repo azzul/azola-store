@@ -117,7 +117,7 @@
             <div class="field"><label for="variant_name">Nama variasi</label><input id="variant_name" type="text" name="variant_name" required maxlength="80" placeholder="Contoh: 500 g halus" value="{{ old('variant_name') }}"></div>
             <div class="field"><label for="v_sku">SKU</label><input id="v_sku" type="text" name="sku" required maxlength="60" value="{{ old('sku') }}"></div>
             <div class="field"><label for="v_barcode">Barcode</label><input id="v_barcode" type="text" name="barcode" maxlength="60" value="{{ old('barcode') }}"></div>
-            <div class="field"><label for="v_unit">Satuan</label><input id="v_unit" type="text" name="unit" required maxlength="20" value="{{ old('unit', $group->variants->last()->unit ?? 'pcs') }}"></div>
+            <div class="field"><label for="v_unit">Satuan</label><input id="v_unit" type="text" name="unit" list="units-list" required maxlength="20" value="{{ old('unit', $group->variants->last()->unit ?? 'pcs') }}"><datalist id="units-list">@foreach (\App\Models\Unit::orderBy('name')->pluck('name') as $u)<option value="{{ $u }}">@endforeach</datalist></div>
             <div class="field"><label for="v_price">Harga jual (Rp)</label><input id="v_price" type="number" name="price" min="0" required value="{{ old('price') }}"></div>
             <div class="field"><label for="v_min">Batas stok menipis</label><input id="v_min" type="number" step="0.001" min="0" name="min_stock" value="{{ old('min_stock') }}"></div>
             @foreach ((array) $group->option_names as $n)

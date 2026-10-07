@@ -108,12 +108,17 @@
     <aside class="side">
         <a class="side__brand" href="{{ route('admin.dashboard') }}">{{ config('store.name') }}<small>Admin</small></a>
         <nav aria-label="Menu admin">
-            @foreach ($groups as [$title, $items])
-                @php($on = collect($items)->contains(fn ($i) => request()->is($i[2])))
+            @php
+                    // Hanya satu menu yang aktif: yang polanya paling spesifik (mis. pembelian/baru mengalahkan pembelian*).
+                    $best = null; $bestLen = -1;
+                    foreach ($groups as [$gn, $gi]) { foreach ($gi as $i) { if (request()->is($i[2]) && strlen($i[2]) > $bestLen) { $best = $i[0]; $bestLen = strlen($i[2]); } } }
+                @endphp
+                @foreach ($groups as [$title, $items])
+                @php($on = collect($items)->contains(fn ($i) => $i[0] === $best))
                 <details class="navgroup" @if ($on || $title === 'Ringkasan') open @endif data-group="{{ $title }}">
                     <summary>{{ $title }}@php($sum = collect($items)->sum(fn ($i) => (int) ($i[3] ?? 0)))@if ($sum)<span class="navcount">{{ $sum }}</span>@endif</summary>
                     @foreach ($items as $i)
-                        <a href="{{ route($i[0]) }}" @class(['is-on' => request()->is($i[2])])>{{ $i[1] }}@if (! empty($i[3]))<span class="navcount">{{ $i[3] }}</span>@endif</a>
+                        <a href="{{ route($i[0]) }}" @class(['is-on' => $i[0] === $best])>{{ $i[1] }}@if (! empty($i[3]))<span class="navcount">{{ $i[3] }}</span>@endif</a>
                     @endforeach
                 </details>
             @endforeach

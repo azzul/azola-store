@@ -29,7 +29,7 @@ Email admin ada di `.env` (`SEED_ADMIN_EMAIL`), password di `SEED_ADMIN_PASSWORD
 
 Bawaan memakai SQLite (`database/database.sqlite`). Untuk MySQL XAMPP, ubah `DB_*` di `.env`, buat database kosong, lalu jalankan `php artisan migrate --seed` lagi.
 
-Tes: `php artisan test`
+Tes: `php artisan test` (termasuk smoke test yang membuka semua halaman admin dan alur form tiap modul)
 
 ## Atur untuk klien baru
 
@@ -71,6 +71,24 @@ Aturan penting:
 - Harga dan HPP dihitung server. Stok tidak boleh minus: kalau kurang, seluruh transaksi ditolak.
 - Uang = rupiah bulat. Jumlah barang boleh desimal (3 digit), dikirim sebagai teks.
 - Poll stok tiap beberapa detik dengan `since` terakhir. Perubahan terlihat di semua perangkat.
+
+## Modul ERP di admin (menu samping, dikelompokkan)
+
+Semua transaksi otomatis menjadi **jurnal realtime** dan stok ikut berubah (HPP rata-rata tertimbang dihitung ulang). Angka kartu hutang/piutang berasal dari jurnal, jadi selalu cocok dengan buku besar.
+
+| Kelompok | Isi |
+|---|---|
+| **Master** | Produk (SKU), katalog & foto, kategori, variasi, satuan, konversi satuan (dus, lusin), harga per level (ecer/grosir), akun (COA), supplier, customer, gudang, etalase |
+| **Pembelian** | Laporan pembelian (filter, CSV), input + **edit** faktur (tunai/bank/kredit, diskon, DP), alih gudang & penerimaan (selisih jadi kerugian), retur pembelian (potong hutang/tunai/transfer/piutang supplier), hutang (umur hutang), pembayaran hutang (alokasi FIFO atau pilih faktur) |
+| **Penjualan** | Penjualan kasir (POS), daftar penjualan, input penjualan admin (harga per level, satuan besar, piutang), penjualan batal, penjualan detail per item (HPP & laba), retur penjualan, kembalian lebih transfer |
+| **Order online** | Baru, Perlu proses, Sedang dikirim (kurir + resi), Selesai, Batal |
+| **Keuangan** | DP customer, piutang supplier, kartu hutang, kartu piutang, rekap pendapatan (tunai/debit/QRIS/transfer/DP, per kanal & hari), rekap kas harian (hitung pecahan uang di laci, selisih dijurnal), mutasi saldo, depresiasi aset, biaya & kas masuk lain |
+| **Stok** | Stok barang terkini (toko + gudang lain), mutasi stok, kartu stok, penyesuaian stok (rusak, hilang, kedaluwarsa, penyusutan, koreksi), stok opname, data stok opname |
+| **Laporan** | Jurnal umum, general ledger, jurnal laba rugi, jurnal neraca, neraca saldo, jurnal penyesuaian (manual + otomatis), rekonsiliasi |
+
+Setelah `git pull`, jalankan `php artisan migrate` (tabel ERP baru, data lama aman) lalu `php artisan db:seed --class=AccountSeeder` (menambah akun baru tanpa menghapus yang ada). Data contoh ERP (supplier, pembelian kredit, retur, alih gudang, DP, aset) ada di `DemoErpSeeder`; ikut berjalan di `php artisan migrate --seed` dan dilewati bila sudah ada supplier. Hapus sebelum dipakai klien.
+
+Batasan yang disengaja: retur penjualan tidak bisa dibatalkan (buat transaksi koreksi); alih gudang tidak menjurnal kecuali ada kekurangan saat diterima; harga jual di form input penjualan tidak boleh di atas harga daftar (turunkan untuk memberi diskon).
 
 ## Cara data dijaga akurat
 

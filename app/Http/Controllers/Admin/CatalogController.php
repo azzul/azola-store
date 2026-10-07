@@ -97,6 +97,7 @@ class CatalogController extends Controller
             'initial_qty' => ['nullable', 'numeric', 'min:0'],
             'initial_cost' => ['nullable', 'integer', 'min:0', 'required_with:initial_qty'],
         ]);
+        \App\Models\Unit::firstOrCreate(['name' => $data['unit']]);
 
         $options = collect($names)->mapWithKeys(fn ($n) => [$n => trim((string) ($data['options'][$n] ?? ''))])->filter()->all();
         $name = $group->name.' '.$data['variant_name'];

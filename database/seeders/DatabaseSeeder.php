@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
         $admin->save();
 
         $this->call(DemoStoreSeeder::class);
+        $this->call(DemoErpSeeder::class);
         $this->call(DemoArticleSeeder::class);
         $this->call(DemoSettingSeeder::class);
     }

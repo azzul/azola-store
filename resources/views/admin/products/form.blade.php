@@ -11,16 +11,20 @@
     @csrf
     @unless ($isNew) @method('PUT') @endunless
     <h2>Data produk</h2>
+    @if ($product->exists && $product->group && ! $product->group->auto)
+        <p class="hint" style="margin-top:-.4rem">Variasi dari produk <a href="{{ route('admin.catalog.edit', $product->group) }}">{{ $product->group->name }}</a>. Atur foto, etalase, dan variasi lain di sana.</p>
+    @endif
     <div class="form-grid">
         <div class="field"><label for="name">Nama</label><input id="name" type="text" name="name" value="{{ old('name', $product->name) }}" required maxlength="160"></div>
         <div class="field"><label for="sku">SKU</label><input id="sku" type="text" name="sku" value="{{ old('sku', $product->sku) }}" required maxlength="60"></div>
+        @if ($product->exists && $product->group && ! $product->group->auto)<div class="field"><label for="variant_name">Nama variasi</label><input id="variant_name" type="text" name="variant_name" value="{{ old('variant_name', $product->variant_name) }}" maxlength="80"></div>@endif
         <div class="field"><label for="barcode">Barcode</label><input id="barcode" type="text" name="barcode" value="{{ old('barcode', $product->barcode) }}" maxlength="60"></div>
         <div class="field"><label for="category_id">Kategori</label>
             <select id="category_id" name="category_id"><option value="">Tanpa kategori</option>@foreach ($categories as $c)<option value="{{ $c->id }}" @selected((int) old('category_id', $product->category_id) === $c->id)>{{ $c->name }}</option>@endforeach</select></div>
         <div class="field"><label for="unit">Satuan</label><input id="unit" type="text" name="unit" value="{{ old('unit', $product->unit) }}" required maxlength="20"></div>
         <div class="field"><label for="price">Harga jual (Rp)</label><input id="price" type="number" name="price" min="0" value="{{ old('price', $product->price) }}" required></div>
         <div class="field"><label for="min_stock">Batas stok menipis</label><input id="min_stock" type="number" step="0.001" min="0" name="min_stock" value="{{ old('min_stock', \App\Support\Qty::pretty($product->min_stock ?? 0)) }}"><div class="hint">Kosong/0 = pakai batas bawaan toko.</div></div>
-        <div class="field"><label for="image">Foto produk (maks. 2 MB)</label><input id="image" type="file" name="image" accept="image/*">@if ($product->imageUrl())<div class="hint">Sudah ada foto. Unggah lagi untuk mengganti.</div>@endif</div>
+        <div class="field"><label for="image">Foto produk (maks. 5 MB)</label><input id="image" type="file" name="image" accept="image/*">@if ($product->imageUrl())<div class="hint">Sudah ada foto. Unggah lagi untuk mengganti.</div>@endif</div>
     </div>
     <div class="field"><label for="description">Deskripsi</label><textarea id="description" name="description" maxlength="5000">{{ old('description', $product->description) }}</textarea></div>
     <div class="form-grid">

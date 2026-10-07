@@ -41,7 +41,7 @@ return [
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
+            'url' => '/storage', // relatif: jalan di host/port mana pun; URL absolut dibuat lewat url() untuk SEO
             'visibility' => 'public',
             'throw' => false,
             'report' => false,

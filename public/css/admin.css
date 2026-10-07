@@ -115,3 +115,13 @@ dl.kv { display: grid; grid-template-columns: 9rem 1fr; gap: .3rem .8rem; margin
   .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (prefers-reduced-motion: reduce) { .live i, tr.flash-row { animation: none; } }
+
+/* Katalog: galeri foto dan form etalase */
+.gallery-admin { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 1rem; margin: 1rem 0; }
+.gimg { position: relative; margin: 0; border: 1px solid var(--line, #d9ded5); border-radius: 10px; padding: .6rem; background: #fff; display: grid; gap: .6rem; align-content: start; }
+.gimg > img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; background: #eef1ea; }
+.gimg__cover { position: absolute; top: 1rem; left: 1rem; }
+.gimg__edit { display: grid; gap: .4rem; }
+.gimg__tools { display: flex; flex-wrap: wrap; gap: .4rem; justify-content: space-between; }
+.gimg__tools form { display: flex; gap: .3rem; flex-wrap: wrap; }
+.stack { display: grid; gap: .4rem; }

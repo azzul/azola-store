@@ -19,7 +19,8 @@ Route::middleware('stock.cursor')->group(function () {
     Route::get('/', [HomeController::class, 'index'])->name('home');
 
     Route::get('/produk', [ShopController::class, 'index'])->name('shop.index');
-    Route::get('/produk/{product:slug}', [ShopController::class, 'show'])->name('shop.product');
+    Route::get('/produk/{group:slug}', [ShopController::class, 'show'])->name('shop.product');
+    Route::get('/etalase/{etalase:slug}', [ShopController::class, 'etalase'])->name('shop.etalase');
     Route::get('/kategori/{category:slug}', [ShopController::class, 'category'])->name('shop.category');
 
     Route::get('/keranjang', [CartController::class, 'index'])->name('cart.index');

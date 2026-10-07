@@ -4,9 +4,18 @@
     <div class="wrap page">
         @include('store.partials.crumbs', ['trail' => $trail])
         <h1 class="page__title">{{ $heading }}</h1>
-        @if ($category && $category->description)<p class="page__lead">{{ $category->description }}</p>@endif
+        @if ($lead)<p class="page__lead">{{ $lead }}</p>@endif
 
-        <form class="filters" action="{{ $category ? $category->url() : route('shop.index') }}" method="get">
+        @if ($etalases->isNotEmpty())
+            <nav class="chips" aria-label="Etalase">
+                <a class="chip {{ ! $etalase && ! $category && ! request('etalase') ? 'is-on' : '' }}" href="{{ route('shop.index') }}">Semua</a>
+                @foreach ($etalases as $e)
+                    <a class="chip {{ ($etalase && $etalase->id === $e->id) || request('etalase') === $e->slug ? 'is-on' : '' }}" href="{{ $e->url() }}">{{ $e->name }}</a>
+                @endforeach
+            </nav>
+        @endif
+
+        <form class="filters" action="{{ $etalase ? $etalase->url() : ($category ? $category->url() : route('shop.index')) }}" method="get">
             <div class="filters__q">
                 <label for="q" class="sr">Cari produk</label>
                 <input id="q" name="q" type="search" value="{{ $q }}" placeholder="Cari nama barang atau kode">
@@ -22,6 +31,17 @@
                     </select>
                 </div>
             @endunless
+            @unless ($etalase)
+                <div>
+                    <label for="etalase">Etalase</label>
+                    <select id="etalase" name="etalase">
+                        <option value="">Semua</option>
+                        @foreach ($etalases as $e)
+                            <option value="{{ $e->slug }}" @selected(request('etalase') === $e->slug)>{{ $e->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            @endunless
             <div>
                 <label for="urut">Urutkan</label>
                 <select id="urut" name="urut">
@@ -30,6 +50,7 @@
                     @endforeach
                 </select>
             </div>
+            <label class="check filters__stock"><input type="checkbox" name="tersedia" value="1" @checked($onlyStock)> Hanya yang ada stok</label>
             <button class="btn btn--ghost" type="submit">Terapkan</button>
         </form>
 

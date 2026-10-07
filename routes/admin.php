@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\Admin\AuthController;
+use App\Http\Controllers\Admin\CatalogController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\EtalaseController;
 use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\MessageController;
 use App\Http\Controllers\Admin\ReviewController;
@@ -27,6 +29,22 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('stok', [DashboardController::class, 'stock'])->name('stock');
         Route::get('stok/feed', [DashboardController::class, 'stockFeed'])->name('stock.feed');
+
+        Route::get('katalog', [CatalogController::class, 'index'])->name('catalog.index');
+        Route::get('katalog/baru', [CatalogController::class, 'create'])->name('catalog.create');
+        Route::post('katalog', [CatalogController::class, 'store'])->name('catalog.store');
+        Route::get('katalog/{group}', [CatalogController::class, 'edit'])->name('catalog.edit');
+        Route::put('katalog/{group}', [CatalogController::class, 'update'])->name('catalog.update');
+        Route::post('katalog/{group}/variasi', [CatalogController::class, 'storeVariant'])->name('catalog.variants.store');
+        Route::post('katalog/{group}/foto', [CatalogController::class, 'uploadImages'])->name('catalog.images.store');
+        Route::put('katalog/{group}/foto/{image}', [CatalogController::class, 'updateImage'])->name('catalog.images.update');
+        Route::post('katalog/{group}/foto/{image}/pindah', [CatalogController::class, 'moveImage'])->name('catalog.images.move');
+        Route::delete('katalog/{group}/foto/{image}', [CatalogController::class, 'destroyImage'])->name('catalog.images.destroy');
+
+        Route::get('etalase', [EtalaseController::class, 'index'])->name('etalases.index');
+        Route::post('etalase', [EtalaseController::class, 'store'])->name('etalases.store');
+        Route::put('etalase/{etalase}', [EtalaseController::class, 'update'])->name('etalases.update');
+        Route::delete('etalase/{etalase}', [EtalaseController::class, 'destroy'])->name('etalases.destroy');
 
         Route::get('produk', [ProductController::class, 'index'])->name('products.index');
         Route::get('produk/baru', [ProductController::class, 'create'])->name('products.create');

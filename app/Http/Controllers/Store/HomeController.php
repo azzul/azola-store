@@ -6,19 +6,20 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Client;
 use App\Models\Testimonial;
-use App\Models\Product;
+use App\Models\Etalase;
+use App\Models\ProductGroup;
 use App\Support\Seo;
 
 class HomeController extends Controller
 {
     public function index()
     {
-        $featured = Product::online()->with('category')
+        $featured = ProductGroup::online()->with(['category', 'images', 'variants'])
             ->orderByDesc('is_featured')->orderByDesc('id')
             ->limit(8)->get();
 
         $categories = Category::query()
-            ->withCount(['products as online_products_count' => fn ($q) => $q->online()])
+            ->withCount(['groups as online_products_count' => fn ($q) => $q->online()])
             ->orderBy('sort_order')->orderBy('name')->get()
             ->filter(fn ($c) => $c->online_products_count > 0)->values();
 
@@ -33,9 +34,10 @@ class HomeController extends Controller
             'shelf' => $featured->take(5),
             'featured' => $featured,
             'categories' => $categories,
+            'etalases' => Etalase::visible()->whereHas('groups', fn ($g) => $g->online())->orderBy('sort_order')->get(),
             'faq' => config('store.faq'),
             'stats' => [
-                'products' => Product::online()->count(),
+                'products' => ProductGroup::online()->count(),
                 'categories' => $categories->count(),
             ],
             'reviewSummary' => Testimonial::summary(),

@@ -29,7 +29,7 @@ final class Presenter
             'stock_state' => $product->stockState(),
             'is_active' => (bool) $product->is_active,
             'is_online' => (bool) $product->is_online,
-            'image_url' => $product->imageUrl(),
+            'image_url' => ($img = $product->imageUrl()) ? url($img) : null,
             'updated_at' => $product->updated_at?->toIso8601String(),
         ];
 

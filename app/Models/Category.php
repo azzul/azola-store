@@ -14,6 +14,11 @@ class Category extends Model
         return $this->hasMany(Product::class);
     }
 
+    public function groups(): HasMany
+    {
+        return $this->hasMany(ProductGroup::class);
+    }
+
     public function url(): string
     {
         return route('shop.category', $this->slug);

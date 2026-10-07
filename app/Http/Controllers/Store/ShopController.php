@@ -4,7 +4,8 @@ namespace App\Http\Controllers\Store;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
-use App\Models\Product;
+use App\Models\Etalase;
+use App\Models\ProductGroup;
 use App\Support\Seo;
 use Illuminate\Http\Request;
 
@@ -12,28 +13,36 @@ class ShopController extends Controller
 {
     private const SORTS = [
         'terbaru' => ['Terbaru', 'id', 'desc'],
-        'termurah' => ['Harga terendah', 'price', 'asc'],
-        'termahal' => ['Harga tertinggi', 'price', 'desc'],
+        'termurah' => ['Harga terendah', 'price_min', 'asc'],
+        'termahal' => ['Harga tertinggi', 'price_min', 'desc'],
         'nama' => ['Nama A-Z', 'name', 'asc'],
     ];
 
     public function index(Request $request)
     {
-        return $this->listing($request, null);
+        return $this->listing($request, null, null);
     }
 
     public function category(Request $request, Category $category)
     {
-        return $this->listing($request, $category);
+        return $this->listing($request, $category, null);
     }
 
-    private function listing(Request $request, ?Category $category)
+    public function etalase(Request $request, Etalase $etalase)
+    {
+        abort_unless($etalase->is_visible, 404);
+
+        return $this->listing($request, null, $etalase);
+    }
+
+    private function listing(Request $request, ?Category $category, ?Etalase $etalase)
     {
         $q = trim((string) $request->query('q', ''));
         $sortKey = array_key_exists($request->query('urut'), self::SORTS) ? $request->query('urut') : 'terbaru';
         [, $column, $direction] = self::SORTS[$sortKey];
+        $onlyStock = $request->boolean('tersedia');
 
-        $query = Product::online()->with('category');
+        $query = ProductGroup::online()->with(['category', 'images', 'variants']);
 
         if ($category) {
             $query->where('category_id', $category->id);
@@ -41,27 +50,42 @@ class ShopController extends Controller
             $query->whereHas('category', fn ($c) => $c->where('slug', $slug));
         }
 
+        if ($etalase) {
+            $query->whereHas('etalases', fn ($e) => $e->whereKey($etalase->id));
+        } elseif ($slug = $request->query('etalase')) {
+            $query->whereHas('etalases', fn ($e) => $e->where('slug', $slug));
+        }
+
         if ($q !== '') {
             $like = '%'.addcslashes($q, '%_\\').'%';
-            $query->where(fn ($w) => $w->where('name', 'like', $like)->orWhere('sku', 'like', $like)->orWhere('barcode', $q));
+            $query->where(fn ($w) => $w->where('name', 'like', $like)->orWhere('brand', 'like', $like)
+                ->orWhereHas('variants', fn ($v) => $v->where('name', 'like', $like)->orWhere('sku', 'like', $like)->orWhere('barcode', $q)));
         }
 
-        $products = $query->orderBy($column, $direction)->orderBy('id')->paginate(12)->withQueryString();
+        if ($onlyStock) {
+            $query->whereHas('variants', fn ($v) => $v->online()->where('stock_qty', '>', 0));
+        }
 
-        // Hasil pencarian/urutan tidak diindeks supaya Google hanya melihat halaman kategori yang bersih.
-        $filtered = $q !== '' || $sortKey !== 'terbaru' || (! $category && $request->query('kategori'));
-        $page = $products->currentPage();
-        $base = $category ? $category->url() : route('shop.index');
+        $groups = $query->orderBy($column, $direction)->orderBy('id')->paginate(12)->withQueryString();
 
-        $title = $category ? $category->name : 'Semua produk';
+        // Hasil pencarian/urutan/filter tidak diindeks supaya Google hanya melihat halaman kategori dan etalase yang bersih.
+        $filtered = $q !== '' || $onlyStock || $sortKey !== 'terbaru'
+            || (! $category && $request->query('kategori')) || (! $etalase && $request->query('etalase'));
+        $page = $groups->currentPage();
+        $current = $etalase ?? $category;
+        $base = $current ? $current->url() : route('shop.index');
+
+        $title = $current ? $current->name : 'Semua produk';
         $trail = [['Beranda', url('/')], ['Produk', route('shop.index')]];
-        if ($category) {
-            $trail[] = [$category->name, $category->url()];
+        if ($current) {
+            $trail[] = [$current->name, $current->url()];
         }
+
+        $description = $current?->description ?: ($current ? "Belanja {$current->name} di ".config('store.name').'. Stok realtime, harga jelas.' : 'Katalog lengkap '.config('store.name').'. Stok realtime, harga jelas.');
 
         $seo = Seo::page([
             'title' => $title.($page > 1 ? " - halaman {$page}" : ''),
-            'description' => $category?->description ?: ($category ? "Belanja {$category->name} di ".config('store.name').'. Stok realtime, harga jelas.' : 'Katalog lengkap '.config('store.name').'. Stok realtime, harga jelas.'),
+            'description' => $description,
             'canonical' => $page > 1 ? $base.'?page='.$page : $base,
             'robots' => $filtered ? 'noindex,follow' : 'index,follow,max-image-preview:large',
             'jsonld' => [Seo::breadcrumbs($trail)],
@@ -69,43 +93,47 @@ class ShopController extends Controller
 
         return view('store.catalog', [
             'seo' => $seo,
-            'products' => $products,
+            'products' => $groups,
             'category' => $category,
+            'etalase' => $etalase,
             'categories' => Category::orderBy('sort_order')->orderBy('name')->get(),
+            'etalases' => Etalase::visible()->orderBy('sort_order')->orderBy('name')->get(),
             'q' => $q,
             'sort' => $sortKey,
+            'onlyStock' => $onlyStock,
             'sorts' => collect(self::SORTS)->map(fn ($s) => $s[0]),
             'heading' => $title,
+            'lead' => $current?->description,
             'trail' => $trail,
         ]);
     }
 
-    public function show(Product $product)
+    public function show(ProductGroup $group)
     {
-        abort_unless($product->is_active && $product->is_online, 404);
+        abort_unless($group->is_active && $group->is_online && $group->sellable()->isNotEmpty(), 404);
 
-        $product->load('category');
+        $group->load(['category', 'images', 'etalases' => fn ($e) => $e->visible()]);
 
-        $related = Product::online()->with('category')
-            ->where('id', '!=', $product->id)
-            ->when($product->category_id, fn ($q) => $q->where('category_id', $product->category_id))
+        $related = ProductGroup::online()->with(['category', 'images', 'variants'])
+            ->where('id', '!=', $group->id)
+            ->when($group->category_id, fn ($q) => $q->where('category_id', $group->category_id))
             ->orderByDesc('is_featured')->orderByDesc('id')->limit(4)->get();
 
         $trail = [['Beranda', url('/')], ['Produk', route('shop.index')]];
-        if ($product->category) {
-            $trail[] = [$product->category->name, $product->category->url()];
+        if ($group->category) {
+            $trail[] = [$group->category->name, $group->category->url()];
         }
-        $trail[] = [$product->name, $product->url()];
+        $trail[] = [$group->name, $group->url()];
 
         $seo = Seo::page([
-            'title' => $product->meta_title ?: $product->name,
-            'description' => $product->meta_description ?: ($product->description ?: $product->name.' di '.config('store.name')),
-            'canonical' => $product->url(),
-            'image' => $product->imageUrl(),
+            'title' => $group->meta_title ?: $group->name,
+            'description' => $group->meta_description ?: ($group->summary ?: ($group->description ?: $group->name.' di '.config('store.name'))),
+            'canonical' => $group->url(),
+            'image' => ($img = $group->imageUrl('large')) ? url($img) : null,
             'type' => 'product',
-            'jsonld' => [Seo::product($product), Seo::breadcrumbs($trail)],
+            'jsonld' => [Seo::product($group), Seo::breadcrumbs($trail)],
         ]);
 
-        return view('store.product', compact('seo', 'product', 'related', 'trail'));
+        return view('store.product', ['seo' => $seo, 'group' => $group, 'related' => $related, 'trail' => $trail]);
     }
 }

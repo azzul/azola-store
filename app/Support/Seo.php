@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Product;
+use App\Models\ProductGroup;
 use Illuminate\Support\Str;
 
 /** Meta tag dan data terstruktur (schema.org) untuk halaman toko. */
@@ -65,33 +66,53 @@ final class Seo
         ];
     }
 
-    public static function product(Product $product): array
+    public static function product(ProductGroup $group): array
     {
-        $data = [
-            '@context' => 'https://schema.org',
-            '@type' => 'Product',
-            'name' => $product->name,
-            'sku' => $product->sku,
-            'description' => Str::limit(strip_tags($product->description ?: $product->name), 300, ''),
-            'offers' => [
-                '@type' => 'Offer',
-                'url' => $product->url(),
-                'priceCurrency' => 'IDR',
-                'price' => (string) (int) $product->price,
-                'itemCondition' => 'https://schema.org/NewCondition',
-                // Mengikuti stok realtime: Google melihat status yang sama dengan pembeli.
-                'availability' => $product->isInStock() ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-            ],
+        $variants = $group->sellable();
+        $offer = fn (Product $p) => [
+            '@type' => 'Offer',
+            'url' => $group->url(),
+            'priceCurrency' => 'IDR',
+            'price' => (string) (int) $p->price,
+            'itemCondition' => 'https://schema.org/NewCondition',
+            // Mengikuti stok realtime: Google melihat status yang sama dengan pembeli.
+            'availability' => $p->isInStock() ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
         ];
 
-        if ($product->barcode) {
-            $data['gtin'] = $product->barcode;
+        $data = [
+            '@context' => 'https://schema.org',
+            '@type' => $variants->count() > 1 ? 'ProductGroup' : 'Product',
+            'name' => $group->name,
+            'description' => Str::limit(strip_tags($group->summary ?: ($group->description ?: $group->name)), 300, ''),
+        ];
+
+        if ($group->brand) {
+            $data['brand'] = ['@type' => 'Brand', 'name' => $group->brand];
         }
-        if ($image = $product->imageUrl()) {
-            $data['image'] = [url($image)];
+        if ($images = $group->images->map(fn ($i) => url($i->url('large')))->all()) {
+            $data['image'] = $images;
         }
-        if ($product->category) {
-            $data['category'] = $product->category->name;
+        if ($group->category) {
+            $data['category'] = $group->category->name;
+        }
+
+        if ($one = $group->solo()) {
+            $data['sku'] = $one->sku;
+            if ($one->barcode) {
+                $data['gtin'] = $one->barcode;
+            }
+            $data['offers'] = $offer($one);
+        } else {
+            $data['productGroupID'] = (string) $group->id;
+            $data['variesBy'] = collect($group->axes())->pluck('name')->map(fn ($n) => 'https://schema.org/'.Str::camel($n))->filter(fn ($u) => in_array($u, ['https://schema.org/size', 'https://schema.org/color'], true))->values()->all() ?: null;
+            $data['hasVariant'] = $variants->map(fn (Product $p) => array_filter([
+                '@type' => 'Product',
+                'name' => $p->name,
+                'sku' => $p->sku,
+                'gtin' => $p->barcode ?: null,
+                'offers' => $offer($p),
+            ]))->all();
+            $data = array_filter($data, fn ($v) => $v !== null);
         }
 
         return $data;

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\StockMovement;
+use App\Support\Images;
 use App\Services\InventoryService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -48,10 +49,8 @@ class ProductController extends Controller
 
         $product = new Product($data);
         $product->slug = Product::uniqueSlug($data['name']);
-        if ($request->hasFile('image')) {
-            $product->image_path = $request->file('image')->store('products', 'public');
-        }
         $product->save();
+        $this->storePhoto($request, $product);
 
         if ($initialQty !== null && $initialQty !== '' && (float) $initialQty > 0) {
             $this->inventory->receive($product, $initialQty, (int) $request->input('initial_cost'), $request->input('funding', 'equity'), $request->user()->id, 'admin', 'Stok awal');
@@ -80,10 +79,8 @@ class ProductController extends Controller
         if ($product->isDirty('name') && $request->boolean('regenerate_slug')) {
             $product->slug = Product::uniqueSlug($data['name'], $product->id);
         }
-        if ($request->hasFile('image')) {
-            $product->image_path = $request->file('image')->store('products', 'public');
-        }
         $product->save();
+        $this->storePhoto($request, $product);
 
         return back()->with('ok', 'Perubahan disimpan.');
     }
@@ -124,12 +121,40 @@ class ProductController extends Controller
         return back()->with('ok', 'Hasil opname dicatat.');
     }
 
+    /**
+     * Foto dari form SKU masuk ke galeri produknya (ukuran kartu, besar, miniatur dibuat otomatis).
+     * Produk satu-SKU: foto menggantikan yang lama. Produk bervariasi: foto ditambahkan sebagai foto variasi ini.
+     */
+    private function storePhoto(Request $request, Product $product): void
+    {
+        if (! $request->hasFile('image')) {
+            return;
+        }
+
+        $product->refresh();
+        $group = $product->group;
+        $paths = Images::store($request->file('image'));
+
+        if ($group->auto) {
+            $group->images()->get()->each->delete();
+        }
+        $group->images()->create($paths + [
+            'alt' => $product->name,
+            'product_id' => $group->auto ? null : $product->id,
+            'sort_order' => $group->auto ? 1 : (int) $group->images()->max('sort_order') + 1,
+        ]);
+
+        // Kasir/API memakai foto ukuran kartu.
+        $product->forceFill(['image_path' => $paths['card_path']])->saveQuietly();
+    }
+
     private function validated(Request $request, ?Product $product = null): array
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:160'],
             'sku' => ['required', 'string', 'max:60', Rule::unique('products', 'sku')->ignore($product?->id)],
             'barcode' => ['nullable', 'string', 'max:60'],
+            'variant_name' => ['nullable', 'string', 'max:80'],
             'category_id' => ['nullable', 'exists:categories,id'],
             'unit' => ['required', 'string', 'max:20'],
             'price' => ['required', 'integer', 'min:0'],
@@ -137,7 +162,7 @@ class ProductController extends Controller
             'description' => ['nullable', 'string', 'max:5000'],
             'meta_title' => ['nullable', 'string', 'max:70'],
             'meta_description' => ['nullable', 'string', 'max:320'],
-            'image' => ['nullable', 'image', 'max:2048'],
+            'image' => ['nullable', 'image', 'max:5120'],
         ]);
 
         unset($data['image']);

@@ -40,4 +40,21 @@ class PurchaseReturn extends Model
     {
         return $this->morphMany(Journal::class, 'source');
     }
+
+    /**
+     * Bagian retur yang menjadi piutang supplier: seluruhnya bila diselesaikan sebagai piutang, atau sisa yang
+     * melebihi hutang bila diselesaikan sebagai pemotong hutang.
+     */
+    public function receivableAmount(): int
+    {
+        if ($this->status === 'cancelled') {
+            return 0;
+        }
+
+        return match ($this->settlement) {
+            'receivable' => (int) $this->total,
+            'payable' => max(0, (int) $this->total - (int) PayableAllocation::where('source_type', $this->getMorphClass())->where('source_id', $this->getKey())->sum('amount')),
+            default => 0,
+        };
+    }
 }

@@ -96,7 +96,7 @@ class PurchaseService
             $this->applyStock($locked, $this->bucket($lines, $head['warehouse_id']), $old, $user, 'purchase_edit');
 
             // Jurnal lama dibalik di tanggalnya sendiri agar laporan periode lampau tidak berubah ganda.
-            $this->journals->reverseForSource($locked, 'koreksi faktur', $user?->id, true);
+            $this->journals->reverseForSource($locked, 'koreksi faktur', $user?->id, true, ['adjustment']);
 
             $locked->items()->delete();
             $locked->forceFill($head + [
@@ -136,7 +136,7 @@ class PurchaseService
             }
 
             $this->applyStock($locked, [], $old, $user, 'purchase_void');
-            $this->journals->reverseForSource($locked, $reason ?: 'faktur dibatalkan', $user?->id);
+            $this->journals->reverseForSource($locked, $reason ?: 'faktur dibatalkan', $user?->id, false, ['adjustment']);
 
             $locked->forceFill(['status' => 'cancelled', 'cancelled_at' => now(), 'paid_total' => 0])->save();
 
@@ -230,12 +230,9 @@ class PurchaseService
                 return $locked;
             }
 
-            if ($locked->settlement === 'receivable') {
-                $supplier = $locked->supplier;
-                if ($supplier && $supplier->receivable() - $locked->total < 0
-                    && SupplierPayment::where('supplier_id', $supplier->id)->where('direction', 'receive')->where('status', 'posted')->exists()) {
-                    throw ValidationException::withMessages(['return' => 'Piutang dari retur ini sudah ditagih sebagian. Batalkan penerimaannya dulu.']);
-                }
+            $supplier = $locked->supplier;
+            if ($supplier && $locked->receivableAmount() > 0 && $supplier->receivableRaw() - $locked->receivableAmount() < 0) {
+                throw ValidationException::withMessages(['return' => 'Piutang dari retur ini sudah ditagih sebagian. Batalkan penerimaannya dulu.']);
             }
 
             foreach ($this->mergeLines($this->returnLines($locked)) as $pid => $agg) {
@@ -456,8 +453,8 @@ class PurchaseService
             }
         }
 
-        if ($residual > 0) {
-            $this->journals->post('adjustment', 'Sisa nilai persediaan dihapus ('.$purchase->number.')', $this->costing->residualLines($residual), $purchase, null, $user?->id);
+        if ($residual !== 0) {
+            $this->journals->post('adjustment', 'Selisih nilai persediaan ('.$purchase->number.')', $this->costing->residualLines($residual), $purchase, null, $user?->id);
         }
     }
 

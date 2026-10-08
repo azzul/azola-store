@@ -91,7 +91,9 @@ class StockDocumentService
                     $this->stock->apply($item->product_id, $got, 'transfer_in', $locked, 'admin', $user?->id, 'Penerimaan '.$locked->number, (int) $item->unit_cost, false, $locked->to_warehouse_id);
                 }
 
-                $lossValue += Qty::value($sent - $got, (int) $item->unit_cost);
+                // Nilai selisih memakai HPP saat ini (bukan HPP saat kirim): HPP rata-rata bisa berubah selama barang di jalan,
+                // dan akun Persediaan harus tetap sama dengan stok x HPP.
+                $lossValue += Qty::value($sent - $got, (int) Product::whereKey($item->product_id)->lockForUpdate()->value('cost'));
                 $item->forceFill(['received_qty' => Qty::fromMilli($got)])->save();
             }
 

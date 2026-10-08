@@ -26,6 +26,7 @@ class OrderService
     public function __construct(
         private StockService $stock,
         private JournalService $journals,
+        private CostingService $costing,
     ) {}
 
     /**
@@ -119,6 +120,13 @@ class OrderService
             foreach ($locked->items()->orderBy('product_id')->get() as $item) {
                 if (! $item->product_id) {
                     continue;
+                }
+
+                // HPP rata-rata dihitung ulang: jurnal pembalik mengembalikan nilai sesuai HPP saat dijual,
+                // jadi HPP sekarang harus ikut bergeser agar akun Persediaan tetap sama dengan stok x HPP.
+                $restored = Qty::toMilli($item->qty);
+                if ($product = \App\Models\Product::whereKey($item->product_id)->lockForUpdate()->first()) {
+                    $this->costing->revalue($product, $restored, Qty::value($restored, (int) $item->unit_cost));
                 }
 
                 $this->stock->apply(

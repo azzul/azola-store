@@ -132,14 +132,20 @@ class JournalService
         });
     }
 
-    /** Balik semua jurnal aktif milik satu sumber (mis. satu pesanan). */
-    public function reverseForSource(Model $source, ?string $reason = null, ?int $userId = null, bool $sameDate = false): int
+    /**
+     * Balik semua jurnal aktif milik satu sumber (mis. satu pesanan).
+     *
+     * @param  list<string>  $exceptTypes  jenis jurnal yang tidak dibalik (mis. 'adjustment': selisih nilai persediaan yang
+     *                                     sudah mengubah HPP tidak boleh ikut dibatalkan)
+     */
+    public function reverseForSource(Model $source, ?string $reason = null, ?int $userId = null, bool $sameDate = false, array $exceptTypes = []): int
     {
         $journals = Journal::query()
             ->where('source_type', $source->getMorphClass())
             ->where('source_id', $source->getKey())
             ->whereNull('reversal_of_id')
             ->whereNull('reversed_by_id')
+            ->when($exceptTypes, fn ($q) => $q->whereNotIn('type', $exceptTypes))
             ->orderBy('id')
             ->get();
 

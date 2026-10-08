@@ -30,9 +30,16 @@ class Supplier extends Model
     /** Saldo piutang supplier (mereka berutang ke kita). */
     public function receivable(): int
     {
-        $returns = (int) PurchaseReturn::where('supplier_id', $this->id)->where('status', 'posted')->where('settlement', 'receivable')->sum('total');
+        return max(0, $this->receivableRaw());
+    }
+
+    /** Piutang sebelum dibatasi 0 (negatif = dana yang diterima melebihi retur yang masih berlaku). */
+    public function receivableRaw(): int
+    {
+        $returns = PurchaseReturn::where('supplier_id', $this->id)->where('status', 'posted')->whereIn('settlement', ['receivable', 'payable'])->get()
+            ->sum(fn (PurchaseReturn $r) => $r->receivableAmount());
         $received = (int) SupplierPayment::where('supplier_id', $this->id)->where('status', 'posted')->where('direction', 'receive')->sum('amount');
 
-        return max(0, $returns - $received);
+        return (int) $returns - $received;
     }
 }

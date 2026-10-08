@@ -144,7 +144,8 @@ class ReportService
             } elseif (in_array($account->type, ['cogs', 'expense'], true)) {
                 $earnings -= $debit - $credit;
             } elseif ($debit !== 0 || $credit !== 0) {
-                $sections[$account->type][] = ['account' => $account, 'amount' => $this->signed($account->normal_balance, $debit, $credit)];
+                // Aset: debit - kredit (akun lawan seperti Akumulasi Penyusutan jadi negatif); kewajiban & modal: kredit - debit.
+                $sections[$account->type][] = ['account' => $account, 'amount' => $account->type === 'asset' ? $debit - $credit : $credit - $debit];
             }
         }
 
